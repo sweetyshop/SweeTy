@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SweeTy Shop — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
+  }
+}
+</script>
+<style>
+:root{--bg:#FFF8F0;--surface:#fff;--text:#2B1A10;--soft:#8A6D5D;--primary:#8B4513;--border:#F0DDC6;--accent:#D4A017;--danger:#C62828;--ok:#2E7D32;--shadow:0 8px 30px rgba(43,26,16,.08);--r:16px}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--text)}
+a{color:inherit;text-decoration:none}button{font-family:inherit}
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:fixed;z-index:60;transform:translateX(-100%);transition:.25s}.sidebar.open{transform:translateX(0)}}
+.sidebar{background:#1F130C;color:#E8D5C4;padding:18px 14px;display:flex;flex-direction:column;gap:14px;width:260px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 6px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#8B4513);display:grid;place-items:center;color:#fff;font-weight:800;font-family:Playfair Display}
+.nav{display:grid;gap:6px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid transparent;cursor:pointer;background:transparent;color:#E8D5C4;font-size:14px;font-weight:500;text-align:left;transition:.2s}
+.nav-btn:hover{background:rgba(255,255,255,.08)}.nav-btn.active{background:#fff;color:#1F130C;border-color:#fff}
+.sidebar-foot{margin-top:auto;padding:10px 6px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;opacity:.8;display:grid;gap:10px}
+.badge{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+.badge-demo{background:#FFF3E0;color:#E65100;border-color:#FFE0B2}
+.badge-cloud{background:#E8F5E9;color:#2E7D32;border-color:#C8E6C9}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,248,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.main{padding:18px;max-width:1400px;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+.kpi .card{padding:14px}
+.kpi b{font-size:22px;display:block}.kpi span{font-size:12px;color:var(--soft)}
+.h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:600;font-size:13px;transition:.2s}
+.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}.btn-accent{background:var(--accent);color:#2B1A10;border-color:var(--accent)}.btn-danger{background:#FFEBEE;color:var(--danger);border-color:#FFCDD2}
+.input, select, textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:13px;outline:none}
+.input:focus, select:focus, textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(139,69,19,.12)}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:10px 0 6px;display:block}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+th{background:#FFF6EB;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft)}
+.modal{position:fixed;inset:0;z-index:80;display:none}.modal.open{display:block}
+.backdrop{position:absolute;inset:0;background:rgba(31,19,12,.5);backdrop-filter:blur(6px)}
+.panel{position:relative;max-width:860px;width:calc(100% - 20px);margin:20px auto;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:calc(100vh - 40px);overflow:auto;padding:18px}
+.color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.color-grid{grid-template-columns:repeat(2,1fr)}}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(120px);background:#1F130C;color:#fff;padding:12px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;gap:8px;z-index:90;transition:.35s;max-width:calc(100% - 24px)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.hidden{display:none !important}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px}
+.tab{padding:9px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.tab.active{background:var(--text);color:#fff;border-color:var(--text)}
+.preview-box{border:1px dashed var(--border);border-radius:12px;padding:12px;background:#FFFDF8}
+.code{font-family:ui-monospace,monospace;font-size:12px;background:#1F130C;color:#FFE9C7;padding:12px;border-radius:10px;overflow:auto;white-space:pre-wrap}
+.login{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 600px at 80% 10%, #FFE8C7, #FFF8F0);display:none;place-items:center;padding:16px}
+.login.open{display:grid}
+.login-card{width:min(420px,100%);background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:22px}
+</style>
+</head>
+<body>
+<div class="login" id="loginScreen">
+  <div class="login-card">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="mark">S</div><div><b>SweeTy Shop Admin</b><div style="font-size:12px;color:#8A6D5D">Connexion requise en mode Cloud</div></div></div>
+    <div id="loginInfo" style="font-size:12px;color:#8A6D5D;background:#FFF6EB;border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px">Connectez-vous avec le compte administrateur créé dans Firebase Authentication. Aucun mot de passe codé en dur.</div>
+    <label class="label">Email admin</label><input class="input" id="loginEmail" type="email" placeholder="admin@sweety.dz">
+    <label class="label">Mot de passe</label><input class="input" id="loginPass" type="password" placeholder="••••••••">
+    <div class="row" style="margin-top:12px"><button class="btn btn-primary" id="loginBtn" style="flex:1">Se connecter</button><button class="btn" id="logoutBtn">Déconnexion</button></div>
+    <div id="loginStatus" style="font-size:12px;margin-top:10px"></div>
+    <div style="margin-top:12px;font-size:11px;color:#8A6D5D">Astuce: créez l'admin dans Firebase Console → Authentication → Add user.</div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="mark">S</div><div><b>SweeTy Shop</b><div style="font-size:11px;opacity:.8">Admin Dashboard</div></div><button class="btn" style="margin-left:auto" id="closeSide">✕</button></div>
+    <div class="nav">
+      <button class="nav-btn active" data-view="dashboard">📊 Tableau de bord</button>
+      <button class="nav-btn" data-view="products">🍰 Produits</button>
+      <button class="nav-btn" data-view="categories">📂 Catégories</button>
+      <button class="nav-btn" data-view="homepage">🏠 Page d'accueil</button>
+      <button class="nav-btn" data-view="theme">🎨 Thème</button>
+      <button class="nav-btn" data-view="shop">⚙️ Boutique & livraison</button>
+      <button class="nav-btn" data-view="firebase">☁️ Firebase & Cloud</button>
+      <button class="nav-btn" data-view="backup">💾 Sauvegarde</button>
+      <button class="nav-btn" data-view="preview">👁️ Aperçu</button>
+    </div>
+    <div class="sidebar-foot">
+      <div style="display:flex;gap:8px;align-items:center"><span id="modeBadge" class="badge badge-demo">DEMO MODE — DATA IS LOCAL</span></div>
+      <div id="authState">Non connecté (démo)</div>
+      <div>Dernier save: <span id="lastSave">—</span></div>
+      <a class="btn" href="index.html" target="_blank">Voir boutique ↗</a>
+      <div style="font-size:10px;opacity:.7">LocalStorage ≠ publication internet. Les données locales ne sont visibles que sur ce navigateur.</div>
+    </div>
+  </aside>
+
+  <div style="display:flex;flex-direction:column;min-width:0">
+    <div class="topbar">
+      <div style="display:flex;gap:10px;align-items:center"><button class="btn" id="openSide">☰</button><b id="viewTitle">Tableau de bord</b><span id="cloudStatus" class="badge badge-demo">DEMO</span></div>
+      <div class="row" style="align-items:center">
+        <select id="modeSelect" style="width:auto"><option value="demo">Demo Mode</option><option value="cloud">Firebase Cloud Mode</option></select>
+        <button class="btn btn-accent" id="saveAllBtn">💾 Sauvegarder</button>
+        <button class="btn" id="exportQuickBtn">Export JSON</button>
+      </div>
+    </div>
+
+    <main class="main">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard">
+        <div class="kpi" id="kpiRow"></div>
+        <div class="grid2" style="margin-top:14px">
+          <div class="card"><div class="h"><b>État boutique</b><span id="shopOpenBadge" class="badge"></span></div><div id="shopStateBox" style="font-size:13px;color:#8A6D5D"></div></div>
+          <div class="card"><div class="h"><b>Mode & Firebase</b></div><div id="firebaseStateBox" style="font-size:13px"></div><div class="code" id="configPreview" style="margin-top:10px"></div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><div class="h"><b>Actions rapides</b></div><div class="row"><button class="btn btn-primary" data-jump="products">+ Nouveau produit</button><button class="btn" data-jump="firebase">Configurer Firebase</button><button class="btn" data-jump="backup">Sauvegarde & restauration</button><button class="btn" id="resetDemoBtn">Réinitialiser démo</button></div></div>
+      </section>
+
+      <!-- PRODUCTS -->
+      <section id="view-products" class="hidden">
+        <div class="h"><b>Gestion produits</b><div class="row"><input class="input" id="prodSearch" placeholder="Rechercher..." style="width:220px"><select id="prodFilterCat" style="width:auto"><option value="all">Toutes catégories</option></select><button class="btn btn-primary" id="addProdBtn">+ Ajouter</button></div></div>
+        <div class="table-wrap"><table id="prodTable"><thead><tr><th>Produit</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th>Statut</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="bulkAvailBtn">Basculer dispo sélection</button><button class="btn" id="exportCSVBtn">Export CSV</button><input type="file" id="importCSVInput" accept=".csv" class="hidden"></div>
+      </section>
+
+      <!-- CATEGORIES -->
+      <section id="view-categories" class="hidden">
+        <div class="h"><b>Catégories</b><button class="btn btn-primary" id="addCatBtn">+ Catégorie</button></div>
+        <div id="catList" class="grid2"></div>
+      </section>
+
+      <!-- HOMEPAGE -->
+      <section id="view-homepage" class="hidden">
+        <div class="card">
+          <div class="h"><b>Éditeur page d'accueil</b><span style="font-size:12px;color:#8A6D5D">Chaque section peut être masquée / réordonnée</span></div>
+          <div class="grid2">
+            <div>
+              <label class="label">Nom boutique</label><input class="input" id="h_shopName">
+              <label class="label">Tagline</label><input class="input" id="h_tagline">
+              <label class="label">Annonce barre</label><input class="input" id="h_announcement">
+              <label class="label"><input type="checkbox" id="h_announcementVisible"> Afficher barre annonce</label>
+              <label class="label">Badge hero</label><input class="input" id="h_heroBadge">
+              <label class="label">Titre hero (HTML autorisé)</label><textarea id="h_heroTitle" rows="3"></textarea>
+              <label class="label">Sous-titre hero</label><textarea id="h_heroSub" rows="3"></textarea>
+              <label class="label">Image hero URL</label><input class="input" id="h_heroImage">
+              <label class="label">CTA 1 / CTA 2</label><div class="row"><input class="input" id="h_cta1" style="flex:1"><input class="input" id="h_cta2" style="flex:1"></div>
+              <label class="label">Titres sections</label><div class="row"><input class="input" id="h_featuredTitle" placeholder="Featured"><input class="input" id="h_offersTitle" placeholder="Offres"></div>
+              <div class="row"><input class="input" id="h_catTitle" placeholder="Catégories"><input class="input" id="h_shopTitle" placeholder="Boutique"></div>
+            </div>
+            <div>
+              <label class="label">À propos</label><input class="input" id="h_aboutTitle"><textarea id="h_aboutText" rows="4"></textarea>
+              <label class="label">Contact</label><input class="input" id="h_contactWhatsApp" placeholder="WhatsApp affiché"><input class="input" id="h_contactAddress" placeholder="Adresse"><input class="input" id="h_contactHours" placeholder="Horaires"><input class="input" id="h_mapsUrl" placeholder="Google Maps URL">
+              <label class="label">Social</label><div class="row"><input class="input" id="h_fb" placeholder="Facebook URL"><input class="input" id="h_insta" placeholder="Instagram URL"></div><input class="input" id="h_tiktok" placeholder="TikTok URL">
+              <label class="label">Footer</label><textarea id="h_footerText" rows="3"></textarea>
+              <label class="label">Sections visibilité & ordre</label><div id="sectionsEditor" style="display:grid;gap:8px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- THEME -->
+      <section id="view-theme" class="hidden">
+        <div class="grid2">
+          <div class="card">
+            <div class="h"><b>Thème & couleurs</b><select id="presetSelect" style="width:auto"><option value="">— Presets —</option><option value="luxury">Luxury Chocolate</option><option value="pink">Pink Pastry</option><option value="creamGold">Cream & Gold</option><option value="minimal">Modern Minimal</option><option value="dark">Dark Luxury</option></select></div>
+            <div class="color-grid" id="colorGrid"></div>
+            <label class="label">Rayons, largeur, espacements</label><div class="row"><input class="input" id="th_radius" placeholder="18px" style="flex:1"><input class="input" id="th_pageWidth" placeholder="1280px" style="flex:1"><input class="input" id="th_sectionPad" placeholder="80px" style="flex:1"></div>
+            <label class="label">Polices</label><div class="row"><input class="input" id="th_fontDisplay" placeholder="Playfair Display" style="flex:1"><input class="input" id="th_fontBody" placeholder="Poppins" style="flex:1"></div>
+            <label class="label">CSS personnalisé (validé)</label><textarea id="th_customCss" rows="6" placeholder=":root{ --primary:#... }"></textarea>
+            <div class="row" style="margin-top:10px"><button class="btn" id="previewThemeBtn">Aperçu</button><button class="btn btn-primary" id="saveThemeBtn">Sauvegarder thème</button><button class="btn" id="exportThemeBtn">Export thème</button><button class="btn" id="resetThemeBtn">Reset</button></div>
+          </div>
+          <div class="card"><div class="h"><b>Live preview</b></div><div class="preview-box" id="themePreview"><div style="display:flex;gap:10px;flex-wrap:wrap"><div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;flex:1"><div style="width:100%;height:80px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));margin-bottom:8px"></div><b style="font-family:Playfair Display">Carte produit</b><div style="font-size:12px;color:#8A6D5D">Aperçu des couleurs et rayons</div><div style="margin-top:8px;display:flex;gap:8px"><span style="background:var(--primary);color:#fff;padding:6px 12px;border-radius:999px;font-size:12px">Primaire</span><span style="background:var(--accent);padding:6px 12px;border-radius:999px;font-size:12px">Accent</span></div></div><div style="background:var(--text);color:#fff;border-radius:16px;padding:14px;flex:1"><b>Header/Footer</b><div style="font-size:12px;opacity:.8;margin-top:6px">Fond header, footer et texte</div></div></div><style id="themePreviewStyle"></style></div></div>
+        </div>
+      </section>
+
+      <!-- SHOP SETTINGS -->
+      <section id="view-shop" class="hidden">
+        <div class="grid2">
+          <div class="card">
+            <b>Commande & contacts</b>
+            <label class="label">WhatsApp numéro international (sans + ni espaces) pour lien wa.me</label><input class="input" id="s_waNumber" placeholder="213555123456">
+            <label class="label">WhatsApp affichage</label><input class="input" id="s_waDisplay" placeholder="+213 555 123 456">
+            <div class="row"><label style="font-size:13px"><input type="checkbox" id="s_waEnabled"> Activer WhatsApp</label><label style="font-size:13px"><input type="checkbox" id="s_fbEnabled"> Activer Facebook</label></div>
+            <label class="label">Facebook Page URL</label><input class="input" id="s_fbUrl">
+            <label class="label">Messenger Link (m.me)</label><input class="input" id="s_messenger">
+            <label class="label">Instagram / TikTok</label><div class="row"><input class="input" id="s_insta" style="flex:1"><input class="input" id="s_tiktok" style="flex:1"></div>
+            <label class="label">Téléphone / Adresse / Maps</label><input class="input" id="s_phone"><input class="input" id="s_address"><input class="input" id="s_maps">
+            <label class="label">Horaires / Statut boutique</label><input class="input" id="s_hours"><div class="row"><label style="font-size:13px"><input type="checkbox" id="s_shopOpen"> Boutique ouverte</label><label style="font-size:13px"><input type="checkbox" id="s_delivery"> Livraison active</label></div>
+          </div>
+          <div class="card">
+            <b>Prix, stock, livraison</b>
+            <label class="label">Devise / Format prix</label><div class="row"><input class="input" id="s_currency" style="flex:1" value="DZD"><input class="input" id="s_priceFormat" style="flex:2" value="{price} DZD"></div>
+            <label class="label">Seuil stock faible / Min commande / Frais livraison</label><div class="row"><input class="input" id="s_lowStock" type="number" style="flex:1"><input class="input" id="s_minOrder" type="number" style="flex:1"><input class="input" id="s_deliveryFee" type="number" style="flex:1" placeholder="200"></div>
+            <label class="label">Temps préparation / Zones livraison</label><input class="input" id="s_prepTime"><textarea id="s_deliveryAreas" rows="3" placeholder="Tlemcen centre, Imama, etc."></textarea>
+            <label class="label">Instructions commande (HTML)</label><textarea id="s_instructions" rows="5"></textarea>
+            <div class="row" style="margin-top:10px"><button class="btn btn-primary" id="saveShopBtn">Sauvegarder boutique</button></div>
+            <div style="margin-top:10px;font-size:11px;color:#8A6D5D">Ne jamais réduire le stock automatiquement parce qu'un client a ouvert WhatsApp. La réduction se fait uniquement manuellement par l'admin.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIREBASE -->
+      <section id="view-firebase" class="hidden">
+        <div class="card">
+          <div class="h"><b>Firebase Configuration & Cloud Connection</b><span id="fbConnBadge" class="badge badge-demo">NON CONFIGURÉ</span></div>
+          <div style="font-size:12px;color:#8A6D5D;margin-bottom:10px">Où trouver ces valeurs : Firebase Console → Project Settings → General → Your apps → SDK setup and configuration (Config). Créez d'abord un projet sur <a href="https://console.firebase.google.com" target="_blank" style="text-decoration:underline">console.firebase.google.com</a></div>
+          <div class="grid2">
+            <div>
+              <label class="label">API Key</label><input class="input" id="fb_apiKey" placeholder="AIza...">
+              <label class="label">Auth Domain</label><input class="input" id="fb_authDomain" placeholder="xxx.firebaseapp.com">
+              <label class="label">Project ID</label><input class="input" id="fb_projectId" placeholder="sweety-shop-...">
+              <label class="label">Storage Bucket</label><input class="input" id="fb_storageBucket" placeholder="xxx.appspot.com">
+              <label class="label">Messaging Sender ID</label><input class="input" id="fb_messagingSenderId" placeholder="123456789">
+              <label class="label">App ID</label><input class="input" id="fb_appId" placeholder="1:123:web:...">
+              <label class="label">Measurement ID (optionnel)</label><input class="input" id="fb_measurementId" placeholder="G-...">
+            </div>
+            <div>
+              <div class="card" style="background:#FFF6EB">
+                <b>Instructions rapides</b>
+                <ol style="font-size:12px;line-height:1.6;margin:8px 0 0 16px">
+                  <li>Créer projet Firebase</li>
+                  <li>Activer Authentication → Email/Password → Add user admin</li>
+                  <li>Activer Firestore Database → Start in test mode puis appliquer règles sécurisées (voir README)</li>
+                  <li>Activer Storage si besoin d'upload images</li>
+                  <li>Copier config dans ces champs</li>
+                  <li>Tester connexion → Sauvegarder → Connecter</li>
+                  <li>Pour que index.html utilise cloud pour tous les visiteurs, exportez config et uploadez firebase-config.json à la racine du repo GitHub Pages</li>
+                </ol>
+                <div style="margin-top:10px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px"><b>⚠️ Sécurité</b><br>La config Firebase n'est pas secrète mais ne jamais mettre de clé Admin SDK. La sécurité vient de Firebase Auth + Firestore Rules. Ne pas stocker de mot de passe admin dans localStorage.</div>
+              </div>
+              <div style="margin-top:10px" class="row"><label style="font-size:12px"><input type="checkbox" id="fb_remember" checked> Mémoriser config sur cet appareil (localStorage)</label></div>
+              <div class="row" style="margin-top:10px">
+                <button class="btn btn-primary" id="fb_saveBtn">Save Configuration</button>
+                <button class="btn" id="fb_testBtn">Test Firebase Connection</button>
+                <button class="btn btn-accent" id="fb_connectBtn">Connect to Firebase</button>
+                <button class="btn" id="fb_disconnectBtn">Disconnect</button>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <button class="btn" id="fb_clearBtn">Clear Saved Configuration</button>
+                <button class="btn" id="fb_exportBtn">Export Configuration</button>
+                <button class="btn" id="fb_importBtn">Import Configuration</button>
+                <input type="file" id="fb_importFile" accept=".json" class="hidden">
+              </div>
+              <div style="margin-top:10px"><div class="code" id="fb_status">Statut: Non configuré</div></div>
+              <div style="margin-top:10px" class="row"><button class="btn btn-accent" id="fb_importDemoToCloudBtn">Import Demo Data to Cloud (avec confirmation)</button><button class="btn" id="fb_exportCloudToLocalBtn">Exporter Cloud vers Local (backup)</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP -->
+      <section id="view-backup" class="hidden">
+        <div class="grid2">
+          <div class="card"><b>Export / Import</b><div class="row" style="margin-top:10px"><button class="btn btn-primary" id="bk_exportAllBtn">Export JSON complet</button><button class="btn" id="bk_exportProdCSVBtn">Export Produits CSV</button></div><div style="margin-top:10px"><label class="label">Importer JSON (avec validation)</label><input type="file" id="bk_importFile" accept=".json"><div class="preview-box" id="bk_preview" style="margin-top:8px;font-size:12px">Aperçu import...</div><div class="row" style="margin-top:8px"><button class="btn btn-accent" id="bk_applyImportBtn">Appliquer import après validation</button><button class="btn btn-danger" id="bk_clearLocalBtn">Effacer local & reset</button></div></div></div>
+          <div class="card"><b>Configuration Firebase exportée</b><div style="font-size:12px;color:#8A6D5D;margin:8px 0">Pour que tous les visiteurs de index.html voient les données cloud, créez un fichier <code>firebase-config.json</code> à la racine du repo avec la config exportée depuis l'onglet Firebase. GitHub Pages le servira et index.html le chargera automatiquement.</div><div class="code" id="bk_configExport"></div><div class="row" style="margin-top:8px"><button class="btn" id="bk_downloadConfigBtn">Télécharger firebase-config.json</button><button class="btn" id="bk_copyConfigBtn">Copier</button></div></div>
+        </div>
+      </section>
+
+      <!-- PREVIEW -->
+      <section id="view-preview" class="hidden">
+        <div class="card"><div class="h"><b>Aperçu boutique (données actuelles)</b><div class="row"><button class="btn" id="previewRefreshBtn">Rafraîchir</button><a class="btn btn-primary" href="index.html" target="_blank">Ouvrir index.html</a></div></div><div id="previewGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal" id="prodModal"><div class="backdrop" data-close></div><div class="panel">
+  <div class="h"><b id="prodModalTitle">Produit</b><button class="btn" data-close>✕</button></div>
+  <div class="grid2">
+    <div>
+      <label class="label">ID unique</label><input class="input" id="p_id">
+      <label class="label">Nom</label><input class="input" id="p_name">
+      <label class="label">Description</label><textarea id="p_desc" rows="4"></textarea>
+      <label class="label">Catégorie</label><select id="p_cat"></select>
+      <label class="label">Images (URLs ou upload local en démo)</label><textarea id="p_images" rows="3" placeholder="Une URL par ligne"></textarea><input type="file" id="p_imageFile" accept="image/*" multiple><div style="font-size:11px;color:#8A6D5D">En démo, les images sont converties en base64 et stockées en localStorage (limite ~5MB). En cloud, upload vers Firebase Storage.</div>
+      <label class="label">Variantes / Parfums (séparés par virgule)</label><input class="input" id="p_variants">
+      <label class="label">Tailles / Poids (séparés par virgule)</label><input class="input" id="p_sizes">
+    </div>
+    <div>
+      <label class="label">Prix DZD / Ancien prix / Unité</label><div class="row"><input class="input" id="p_price" type="number" style="flex:1"><input class="input" id="p_oldPrice" type="number" placeholder="Ancien" style="flex:1"><select id="p_unit" style="flex:1"><option value="piece">pièce</option><option value="kg">kilogramme</option><option value="g">gramme</option><option value="box">box</option><option value="cup">cup</option><option value="portion">portion</option><option value="custom">custom</option></select></div>
+      <label class="label">Stock / Min commande / Ordre affichage</label><div class="row"><input class="input" id="p_stock" type="number" style="flex:1"><input class="input" id="p_minQty" type="number" style="flex:1"><input class="input" id="p_order" type="number" style="flex:1"></div>
+      <div class="row" style="margin-top:10px"><label style="font-size:13px"><input type="checkbox" id="p_avail"> Disponible</label><label style="font-size:13px"><input type="checkbox" id="p_feat"> Featured</label><label style="font-size:13px"><input type="checkbox" id="p_best"> Best-seller</label><label style="font-size:13px"><input type="checkbox" id="p_new"> Nouveau</label></div>
+      <label class="label">Aperçu image principale</label><img id="p_previewImg" src="" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;border:1px solid var(--border);background:#FFF6EB">
+      <div class="row" style="margin-top:14px"><button class="btn btn-primary" id="saveProdBtn">Sauvegarder produit</button><button class="btn" id="duplicateProdBtn">Dupliquer</button><button class="btn btn-danger" id="deleteProdBtn">Supprimer</button></div>
+      <div id="prodFormStatus" style="font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+</div></div>
+
+<!-- Category Modal -->
+<div class="modal" id="catModal"><div class="backdrop" data-close></div><div class="panel" style="max-width:480px">
+  <div class="h"><b>Catégorie</b><button class="btn" data-close>✕</button></div>
+  <label class="label">ID (slug)</label><input class="input" id="c_id" placeholder="gateaux-secs">
+  <label class="label">Nom</label><input class="input" id="c_name">
+  <label class="label">Description</label><input class="input" id="c_desc">
+  <label class="label">Icône emoji</label><input class="input" id="c_icon" placeholder="🍪">
+  <label class="label">Couleur fond</label><input class="input" id="c_color" type="color" value="#FFF1E0">
+  <label class="label">Ordre / Visible</label><div class="row"><input class="input" id="c_order" type="number" style="flex:1"><label style="font-size:13px"><input type="checkbox" id="c_visible" checked> Visible</label></div>
+  <div class="row" style="margin-top:12px"><button class="btn btn-primary" id="saveCatBtn">Sauvegarder</button><button class="btn btn-danger" id="deleteCatBtn">Supprimer</button></div>
+</div></div>
+
+<div class="toast" id="toast"><span id="toastIcon">✨</span><span id="toastText">Message</span></div>
+
+<script type="module">
+const LS_KEY="sweety_local_db";
+const FB_CFG_KEY="sweety_firebase_config";
+const FB_REMEMBER="sweety_firebase_remember";
+const MODE_KEY="sweety_mode";
+const DEFAULT_PRODUCTS=[
+  {id:"SW-001", name:"Assortiment gâteaux secs prestige", description:"Box 500g de sablés fondants, ghribia, et sablés chocolat.", category:"gateaux-secs", price:2800, oldPrice:3200, unit:"box", stock:25, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=800&auto=format&fit=crop"], variants:["Classique","Chocolat","Miel & amandes"], sizes:["250g","500g","1kg"], order:1},
+  {id:"SW-002", name:"Baklawa royale aux amandes", description:"Feuilletée croustillante, amandes et miel pur.", category:"gateaux-secs", price:3500, oldPrice:null, unit:"kg", stock:12, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1519869325930-281384150729?q=80&w=800&auto=format&fit=crop"], variants:["Amandes","Pistaches"], sizes:["500g","1kg"], order:2},
+  {id:"SW-003", name:"Makrout el Louz fondant", description:"Délice à base d'amandes, parfumé à la fleur d'oranger.", category:"gateaux-secs", price:2200, oldPrice:null, unit:"kg", stock:18, minQty:1, availability:true, featured:false, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=800&auto=format&fit=crop"], variants:["Nature","Citron"], sizes:["250g","500g"], order:3},
+  {id:"SW-004", name:"Mille-feuille vanille", description:"Feuilletage caramélisé, crème mousseline vanille.", category:"patisseries", price:380, oldPrice:450, unit:"piece", stock:30, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?q=80&w=800&auto=format&fit=crop"], variants:["Vanille","Chocolat","Pistache"], sizes:["Individuel"], order:5},
+  {id:"SW-005", name:"Cake anniversaire chocolat intense", description:"Génoise moelleuse, mousse chocolat 70%.", category:"cakes", price:4200, unit:"piece", stock:8, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop"], variants:["Chocolat","Vanille","Fraise"], sizes:["6 pers","8 pers","12 pers"], order:8},
+  {id:"SW-006", name:"Croissant pur beurre AOP", description:"Feuilletage 24h, beurre Charentes.", category:"croissants", price:120, unit:"piece", stock:60, minQty:2, availability:true, featured:false, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=800&auto=format&fit=crop"], variants:["Nature"], sizes:["Unité"], order:10},
+  {id:"SW-007", name:"Café espresso signature", description:"Assemblage arabica 100%.", category:"coffee", price:180, unit:"cup", stock:999, minQty:1, availability:true, featured:false, bestseller:false, isNew:false, images:["https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=800&auto=format&fit=crop"], variants:["Court","Allongé"], sizes:["Simple","Double"], order:12},
+  {id:"SW-008", name:"Jus d'orange pressé", description:"Oranges fraîches pressées à la commande.", category:"juices", price:300, unit:"cup", stock:999, minQty:1, availability:true, featured:false, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?q=80&w=800&auto=format&fit=crop"], variants:["Nature"], sizes:["33cl","50cl"], order:14}
+];
+const DEFAULT_CATEGORIES=[
+  {id:"gateaux-secs", name:"Gâteaux secs", desc:"Sablés, ghribia, makrout", icon:"🍪", color:"#FFF1E0", order:1, visible:true},
+  {id:"patisseries", name:"Pâtisseries", desc:"Fines, modernes", icon:"🧁", color:"#FFE4E6", order:2, visible:true},
+  {id:"cakes", name:"Cakes & anniversaires", desc:"Layer cakes", icon:"🎂", color:"#FFF8E1", order:3, visible:true},
+  {id:"croissants", name:"Croissants & viennoiseries", desc:"Pur beurre", icon:"🥐", color:"#FFECB3", order:4, visible:true},
+  {id:"coffee", name:"Café & boissons chaudes", desc:"Espresso", icon:"☕", color:"#EFEBE9", order:5, visible:true},
+  {id:"juices", name:"Jus & boissons fraîches", desc:"Pressés", icon:"🧃", color:"#E0F2F1", order:6, visible:true},
+  {id:"offres", name:"Offres spéciales", desc:"Promos", icon:"🎁", color:"#F3E5F5", order:7, visible:true}
+];
+const DEFAULT_SETTINGS={
+  shopName:"SweeTy Shop", tagline:"Pâtisseries d'exception", heroBadge:"Fabrication artisanale", heroTitle:"Des douceurs qui <em>racontent</em> l'Algérie",
+  heroSubtitle:"Gâteaux secs fondants, pâtisseries fines, cakes...", heroCta1:"Découvrir la boutique", heroCta2:"Notre histoire",
+  heroImage:"https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop",
+  heroFloatTitle:"Cake du jour", heroFloatSub:"Chocolat intense • 8 pers", heroFloatPrice:"3200 DZD",
+  announcementText:"Livraison disponible à Tlemcen — Commandez avant 16h", announcementVisible:true,
+  featuredTitle:"Nos coups de cœur", featuredSub:"Les plus aimées", offersTitle:"Offres spéciales", offersSub:"Promos limitées",
+  catTitle:"Parcourir par catégorie", catSub:"Douceur du matin au soir", shopTitle:"Toute la boutique", shopSub:"Prix en DZD • WhatsApp",
+  bestTitle:"Les plus commandés", newTitle:"Nouveautés", aboutTitle:"SweeTy, une histoire de passion", aboutText:"Artisan pâtissier à Tlemcen.",
+  aboutBoxTitle:"Pourquoi nous choisir ?", contactWhatsApp:"+213 555 123 456", facebookPageUrl:"https://facebook.com/sweety.shop.tlemcen",
+  messengerLink:"https://m.me/sweety.shop.tlemcen", instagramUrl:"https://instagram.com/sweety.shop", tiktokUrl:"", contactAddress:"Centre-ville, Tlemcen 13000", contactHours:"Lun-Dim 08:00-22:00", googleMapsUrl:"https://maps.google.com/?q=Tlemcen",
+  deliveryInfo:"Livraison Tlemcen : 200 DZD • Minimum 1000 DZD", instructionsTitle:"Comment commander ?", instructionsText:"<li>Parcourez boutique</li><li>Choisissez quantité</li><li>Commander WhatsApp</li>", footerText:"Artisan pâtissier à Tlemcen.", whatsappNumber:"213555123456", whatsappEnabled:true, facebookEnabled:true, currency:"DZD", priceFormat:"{price} DZD", lowStockThreshold:5, shopOpen:true, deliveryEnabled:true, minOrder:1000, prepTime:"30-60 min",
+  sections:{announcement:{visible:true,order:1},hero:{visible:true,order:2},featured:{visible:true,order:3},offers:{visible:true,order:4},categories:{visible:true,order:5},products:{visible:true,order:6},bestsellers:{visible:true,order:7},newArrivals:{visible:true,order:8},about:{visible:true,order:9},contact:{visible:true,order:10}}
+};
+const DEFAULT_THEME={bg:"#FFFBF5",bgSoft:"#FFF6EB",surface:"#FFFFFF",surface2:"#FFF1E0",text:"#3B2314",textSoft:"#7A5A45",primary:"#8B4513",primary2:"#5D2F0D",secondary:"#E8A598",accent:"#D4A017",accent2:"#F5D7B8",border:"#F0DDC6",headerBg:"rgba(255,251,245,0.9)",footerBg:"#2B1A10",footerText:"#E8D5C4",radius:"18px",radiusSm:"12px",fontDisplay:"Playfair Display",fontBody:"Poppins",pageWidth:"1280px",sectionPad:"80px"};
+const PRESETS={luxury:{bg:"#FFFBF5",bgSoft:"#FFF6EB",surface:"#FFFFFF",surface2:"#FFF1E0",text:"#3B2314",textSoft:"#7A5A45",primary:"#8B4513",primary2:"#5D2F0D",secondary:"#E8A598",accent:"#D4A017",border:"#F0DDC6",headerBg:"rgba(255,251,245,0.9)",footerBg:"#2B1A10"},pink:{bg:"#FFF7FA",bgSoft:"#FFE8EF",surface:"#FFFFFF",surface2:"#FFF0F5",text:"#4A2040",textSoft:"#8B5A7A",primary:"#C2185B",primary2:"#880E4F",secondary:"#F48FB1",accent:"#FFB6C1",border:"#F8BBD0",headerBg:"rgba(255,247,250,0.9)",footerBg:"#3E1A33"},creamGold:{bg:"#FFFEF8",bgSoft:"#FFF9E5",surface:"#FFFFFF",surface2:"#FFF8E1",text:"#3E2723",textSoft:"#8D6E63",primary:"#6D4C41",primary2:"#3E2723",secondary:"#D7CCC8",accent:"#FFD700",border:"#FFE082",headerBg:"rgba(255,254,248,0.9)",footerBg:"#2B1E16"},minimal:{bg:"#FAFAFA",bgSoft:"#F5F5F5",surface:"#FFFFFF",surface2:"#EEEEEE",text:"#212121",textSoft:"#757575",primary:"#212121",primary2:"#000000",secondary:"#BDBDBD",accent:"#212121",border:"#E0E0E0",headerBg:"rgba(250,250,250,0.9)",footerBg:"#111111"},dark:{bg:"#1A120E",bgSoft:"#2B1A10",surface:"#2B1A10",surface2:"#3B2314",text:"#FFEEDD",textSoft:"#C9B09A",primary:"#D4A017",primary2:"#8B4513",secondary:"#E8A598",accent:"#FFD700",border:"#4A3020",headerBg:"rgba(26,18,14,0.9)",footerBg:"#0F0A07"}};
+
+const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
+function toast(msg,icon="✨"){ const t=$("#toast"); $("#toastText").textContent=msg; $("#toastIcon").textContent=icon; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),3000); }
+function loadLocal(){ try{ const r=localStorage.getItem(LS_KEY); if(!r) return null; return JSON.parse(r);}catch{return null} }
+function saveLocal(db){ localStorage.setItem(LS_KEY, JSON.stringify(db)); $("#lastSave").textContent=new Date().toLocaleString(); }
+function getDefaultDB(){ return {products:JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)), categories:JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), settings:JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), theme:JSON.parse(JSON.stringify(DEFAULT_THEME)), updatedAt:new Date().toISOString()} }
+function loadFBCfg(){ try{ const r=localStorage.getItem(FB_CFG_KEY); return r?JSON.parse(r):null;}catch{return null} }
+function saveFBCfg(cfg){ localStorage.setItem(FB_CFG_KEY, JSON.stringify(cfg)); localStorage.setItem(FB_REMEMBER, $("#fb_remember").checked?"1":"0"); }
+let DB = (()=>{ const local=loadLocal(); return local? {...getDefaultDB(), ...local, settings:{...getDefaultDB().settings, ...(local.settings||{})}, theme:{...getDefaultDB().theme, ...(local.theme||{})}} : getDefaultDB(); })();
+let FB_CONFIG = loadFBCfg();
+let MODE = localStorage.getItem(MODE_KEY)||"demo";
+let firebaseApp=null, firestore=null, auth=null, storage=null, currentUser=null;
+
+function renderKPIs(){
+  const p=DB.products; const cats=DB.categories;
+  const avail=p.filter(x=>x.availability && x.stock>0).length;
+  const out=p.filter(x=>!x.availability || x.stock<=0).length;
+  const low=p.filter(x=>x.stock>0 && x.stock<= (DB.settings.lowStockThreshold||5)).length;
+  const feat=p.filter(x=>x.featured).length;
+  $("#kpiRow").innerHTML=`
+    <div class="card"><span>Total produits</span><b>${p.length}</b></div>
+    <div class="card"><span>Disponibles</span><b style="color:var(--ok)">${avail}</b></div>
+    <div class="card"><span>Épuisés</span><b style="color:var(--danger)">${out}</b></div>
+    <div class="card"><span>Stock faible</span><b style="color:#EF6C00">${low}</b></div>
+    <div class="card"><span>Catégories</span><b>${cats.length}</b></div>
+    <div class="card"><span>Featured</span><b>${feat}</b></div>
+    <div class="card"><span>Mode</span><b>${MODE.toUpperCase()}</b></div>
+    <div class="card"><span>Firebase</span><b>${firebaseApp?"Connecté":"Non connecté"}</b></div>`;
+  $("#shopStateBox").innerHTML=`<div>Ouvert: ${DB.settings.shopOpen?"Oui":"Non"} • Livraison: ${DB.settings.deliveryEnabled?"Oui":"Non"}</div><div>WhatsApp: ${DB.settings.whatsappNumber} • FB: ${DB.settings.facebookEnabled?"activé":"désactivé"}</div>`;
+  $("#firebaseStateBox").innerHTML=`Mode actuel: <b>${MODE}</b><br>Config présente: ${FB_CONFIG?"Oui":"Non"}<br>Connecté: ${firebaseApp?"Oui":"Non"}<br>User: ${currentUser?currentUser.email:"—"}<br><span style="font-size:11px;color:#8A6D5D">Les données locales ne sont visibles que sur ce navigateur. Ne jamais prétendre que le mode démo publie sur internet.</span>`;
+  $("#configPreview").textContent=FB_CONFIG? JSON.stringify({projectId:FB_CONFIG.projectId, authDomain:FB_CONFIG.authDomain, storageBucket:FB_CONFIG.storageBucket}, null, 2): "Aucune config";
+  $("#modeBadge").textContent= MODE==="cloud" && firebaseApp? "CLOUD MODE — CONNECTED" : "DEMO MODE — DATA IS LOCAL";
+  $("#modeBadge").className="badge "+(MODE==="cloud"&&firebaseApp?"badge-cloud":"badge-demo");
+  $("#cloudStatus").textContent= MODE==="cloud"&&firebaseApp? "CLOUD CONNECTED":"DEMO";
+  $("#cloudStatus").className="badge "+(MODE==="cloud"&&firebaseApp?"badge-cloud":"badge-demo");
+  $("#fbConnBadge").textContent= firebaseApp? "CLOUD MODE — CONNECTED":"NON CONFIGURÉ";
+  $("#fbConnBadge").className="badge "+(firebaseApp?"badge-cloud":"badge-demo");
+  $("#shopOpenBadge").textContent=DB.settings.shopOpen?"OUVERT":"FERMÉ"; $("#shopOpenBadge").className="badge "+(DB.settings.shopOpen?"badge-cloud":"badge-demo");
+  $("#authState").textContent=currentUser?`Connecté: ${currentUser.email}`: (MODE==="cloud"?"Non connecté (auth requise)":"Démo - pas d'auth");
+  $("#bk_configExport").textContent=FB_CONFIG? JSON.stringify(FB_CONFIG, null, 2): "Pas de config";
+}
+
+function renderProductsTable(){
+  const tbody=$("#prodTable tbody"); tbody.innerHTML="";
+  const q=$("#prodSearch").value.toLowerCase(); const cat=$("#prodFilterCat").value;
+  let list=[...DB.products];
+  if(q) list=list.filter(p=>(p.name+p.description+p.id).toLowerCase().includes(q));
+  if(cat!=="all") list=list.filter(p=>p.category===cat);
+  list.sort((a,b)=>(a.order||0)-(b.order||0));
+  list.forEach(p=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><div style="display:flex;gap:8px;align-items:center"><img src="${(p.images&&p.images[0])||""}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;background:#FFF6EB"><div><b style="font-size:13px">${p.name}</b><div style="font-size:11px;color:#8A6D5D">${p.id} • ${p.unit}</div></div></div></td><td>${p.category}</td><td>${p.price} DZD ${p.oldPrice?`<span style="text-decoration:line-through;color:#999"> ${p.oldPrice}</span>`:""}</td><td>${p.stock}</td><td>${p.availability?`<span style="color:var(--ok)">● dispo</span>`:`<span style="color:var(--danger)">● épuisé</span>`} ${p.featured?"★":""} ${p.bestseller?"🔥":""}</td><td><button class="btn" data-edit="${p.id}">Éditer</button> <button class="btn" data-dup="${p.id}">Dupliquer</button></td>`;
+    tbody.appendChild(tr);
+  });
+  $$("[data-edit]").forEach(b=>b.onclick=()=>openProdModal(b.getAttribute("data-edit")));
+  $$("[data-dup]").forEach(b=>b.onclick=()=>duplicateProduct(b.getAttribute("data-dup")));
+}
+
+function renderCatList(){
+  const wrap=$("#catList"); wrap.innerHTML="";
+  const sel=$("#prodFilterCat"); sel.innerHTML=`<option value="all">Toutes catégories</option>`; const pCat=$("#p_cat"); pCat.innerHTML="";
+  DB.categories.sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>{
+    const div=document.createElement("div"); div.className="card"; div.innerHTML=`<div class="h"><b>${c.icon||"📂"} ${c.name}</b><span style="font-size:11px">${c.id}</span></div><div style="font-size:12px;color:#8A6D5D">${c.desc||""} • Ordre ${c.order||0} • ${c.visible?"visible":"masquée"}</div><div style="margin-top:8px"><button class="btn" data-editcat="${c.id}">Éditer</button></div>`;
+    wrap.appendChild(div);
+    const o1=document.createElement("option"); o1.value=c.id; o1.textContent=c.name; sel.appendChild(o1);
+    const o2=document.createElement("option"); o2.value=c.id; o2.textContent=c.name; pCat.appendChild(o2);
+  });
+  $$("[data-editcat]").forEach(b=>b.onclick=()=>openCatModal(b.getAttribute("data-editcat")));
+}
+
+function renderHomepageEditor(){
+  const s=DB.settings;
+  $("#h_shopName").value=s.shopName||""; $("#h_tagline").value=s.tagline||""; $("#h_announcement").value=s.announcementText||""; $("#h_announcementVisible").checked=s.announcementVisible!==false;
+  $("#h_heroBadge").value=s.heroBadge||""; $("#h_heroTitle").value=s.heroTitle||""; $("#h_heroSub").value=s.heroSubtitle||""; $("#h_heroImage").value=s.heroImage||""; $("#h_cta1").value=s.heroCta1||""; $("#h_cta2").value=s.heroCta2||"";
+  $("#h_featuredTitle").value=s.featuredTitle||""; $("#h_offersTitle").value=s.offersTitle||""; $("#h_catTitle").value=s.catTitle||""; $("#h_shopTitle").value=s.shopTitle||"";
+  $("#h_aboutTitle").value=s.aboutTitle||""; $("#h_aboutText").value=s.aboutText||""; $("#h_contactWhatsApp").value=s.contactWhatsApp||""; $("#h_contactAddress").value=s.contactAddress||""; $("#h_contactHours").value=s.contactHours||""; $("#h_mapsUrl").value=s.googleMapsUrl||""; $("#h_fb").value=s.facebookPageUrl||""; $("#h_insta").value=s.instagramUrl||""; $("#h_tiktok").value=s.tiktokUrl||""; $("#h_footerText").value=s.footerText||"";
+  const se=$("#sectionsEditor"); se.innerHTML="";
+  const orderKeys=Object.keys(s.sections||{}).sort((a,b)=>(s.sections[a].order||0)-(s.sections[b].order||0));
+  orderKeys.forEach(k=>{
+    const conf=s.sections[k]; const d=document.createElement("div"); d.style.cssText="display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px";
+    d.innerHTML=`<span style="cursor:grab">↕️</span><b style="flex:1;font-size:12px">${k}</b><label style="font-size:12px"><input type="checkbox" ${conf.visible!==false?"checked":""} data-sec="${k}"> visible</label><input type="number" value="${conf.order||0}" style="width:60px;padding:6px;border-radius:8px;border:1px solid var(--border)" data-order="${k}">`;
+    se.appendChild(d);
+  });
+  $$("#sectionsEditor [data-sec]").forEach(ch=> ch.onchange=()=>{ DB.settings.sections[ch.getAttribute("data-sec")].visible=ch.checked; saveLocal(DB); renderKPIs(); });
+  $$("#sectionsEditor [data-order]").forEach(inp=> inp.onchange=()=>{ DB.settings.sections[inp.getAttribute("data-order")].order=parseInt(inp.value)||0; saveLocal(DB); });
+}
+
+function renderShopSettings(){
+  const s=DB.settings;
+  $("#s_waNumber").value=s.whatsappNumber||""; $("#s_waDisplay").value=s.contactWhatsApp||""; $("#s_waEnabled").checked=s.whatsappEnabled!==false; $("#s_fbEnabled").checked=s.facebookEnabled!==false;
+  $("#s_fbUrl").value=s.facebookPageUrl||""; $("#s_messenger").value=s.messengerLink||""; $("#s_insta").value=s.instagramUrl||""; $("#s_tiktok").value=s.tiktokUrl||"";
+  $("#s_phone").value=s.contactWhatsApp||""; $("#s_address").value=s.contactAddress||""; $("#s_maps").value=s.googleMapsUrl||""; $("#s_hours").value=s.contactHours||""; $("#s_shopOpen").checked=s.shopOpen!==false; $("#s_delivery").checked=s.deliveryEnabled!==false;
+  $("#s_currency").value=s.currency||"DZD"; $("#s_priceFormat").value=s.priceFormat||"{price} DZD"; $("#s_lowStock").value=s.lowStockThreshold||5; $("#s_minOrder").value=s.minOrder||1000; $("#s_deliveryFee").value=s.deliveryFee||200; $("#s_prepTime").value=s.prepTime||"30-60 min"; $("#s_deliveryAreas").value=s.deliveryAreas||""; $("#s_instructions").value=s.instructionsText||"";
+}
+
+function renderThemeEditor(){
+  const t=DB.theme||DEFAULT_THEME;
+  const keys=["bg","bgSoft","surface","surface2","text","textSoft","primary","primary2","secondary","accent","accent2","border","headerBg","footerBg","footerText"];
+  const grid=$("#colorGrid"); grid.innerHTML="";
+  keys.forEach(k=>{
+    const d=document.createElement("div"); d.innerHTML=`<label class="label" style="margin:0 0 4px">${k}</label><input type="color" value="${t[k] && t[k].startsWith('#')?t[k]:'#FFFBF5'}" data-t="${k}" style="width:100%;height:36px;border-radius:10px;border:1px solid var(--border);padding:2px"><input class="input" data-ttext="${k}" value="${t[k]||""}" style="margin-top:4px;font-size:11px">`;
+    grid.appendChild(d);
+  });
+  $$("#colorGrid [data-t]").forEach(inp=> inp.oninput=()=>{ const k=inp.getAttribute("data-t"); DB.theme[k]=inp.value; const txt=document.querySelector(`[data-ttext="${k}"]`); if(txt) txt.value=inp.value; applyPreviewTheme(); });
+  $$("#colorGrid [data-ttext]").forEach(inp=> inp.onchange=()=>{ const k=inp.getAttribute("data-ttext"); DB.theme[k]=inp.value; const col=document.querySelector(`[data-t="${k}"]`); if(col && inp.value.startsWith('#')) col.value=inp.value; applyPreviewTheme(); });
+  $("#th_radius").value=t.radius||"18px"; $("#th_pageWidth").value=t.pageWidth||"1280px"; $("#th_sectionPad").value=t.sectionPad||"80px"; $("#th_fontDisplay").value=t.fontDisplay||"Playfair Display"; $("#th_fontBody").value=t.fontBody||"Poppins"; $("#th_customCss").value=DB.customCss||"";
+  $("#th_radius").oninput=$("#th_pageWidth").oninput=$("#th_sectionPad").oninput=$("#th_fontDisplay").oninput=$("#th_fontBody").oninput=()=>applyPreviewTheme();
+}
+
+function applyPreviewTheme(){
+  const t={...DEFAULT_THEME, ...DB.theme, radius:$("#th_radius").value||"18px", pageWidth:$("#th_pageWidth").value||"1280px", sectionPad:$("#th_sectionPad").value||"80px", fontDisplay:$("#th_fontDisplay").value||"Playfair Display", fontBody:$("#th_fontBody").value||"Poppins"};
+  const css=`
+    #themePreview{ --bg:${t.bg}; --bg-soft:${t.bgSoft}; --surface:${t.surface}; --surface-2:${t.surface2}; --text:${t.text}; --text-soft:${t.textSoft}; --primary:${t.primary}; --accent:${t.accent}; --border:${t.border}; --radius:${t.radius}; }
+    #themePreview .card{border-radius:${t.radius}}
+  `+(DB.customCss||$("#th_customCss").value||"");
+  $("#themePreviewStyle").textContent=css;
+}
+
+function renderFirebaseForm(){
+  const cfg=FB_CONFIG||{}; $("#fb_apiKey").value=cfg.apiKey||""; $("#fb_authDomain").value=cfg.authDomain||""; $("#fb_projectId").value=cfg.projectId||""; $("#fb_storageBucket").value=cfg.storageBucket||""; $("#fb_messagingSenderId").value=cfg.messagingSenderId||""; $("#fb_appId").value=cfg.appId||""; $("#fb_measurementId").value=cfg.measurementId||"";
+  $("#fb_remember").checked=localStorage.getItem(FB_REMEMBER)!=="0";
+  $("#fb_status").textContent= firebaseApp? `CLOUD MODE — CONNECTED • Project ${FB_CONFIG?.projectId} • User ${currentUser?.email||"non auth"}` : (FB_CONFIG? "Config sauvegardée, non connectée — cliquez Connect":"Non configuré");
+}
+
+function renderPreview(){
+  const grid=$("#previewGrid"); grid.innerHTML="";
+  DB.products.slice(0,9).forEach(p=>{ const d=document.createElement("div"); d.className="card"; d.innerHTML=`<img src="${(p.images&&p.images[0])||""}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#FFF6EB"><div style="margin-top:8px"><b style="font-size:13px">${p.name}</b><div style="font-size:12px;color:#8A6D5D">${p.price} DZD • ${p.category}</div></div>`; grid.appendChild(d); });
+}
+
+// ---------- PRODUCT MODAL LOGIC ----------
+let editingProdId=null;
+function openProdModal(id){
+  const p= id? DB.products.find(x=>x.id===id) : {id:"SW-"+Math.floor(100+Math.random()*900), name:"", description:"", category:DB.categories[0]?.id||"gateaux-secs", price:1000, oldPrice:"", unit:"piece", stock:10, minQty:1, availability:true, featured:false, bestseller:false, isNew:true, images:[], variants:[], sizes:[], order:DB.products.length+1};
+  editingProdId=p.id;
+  $("#prodModalTitle").textContent=id?`Éditer ${p.id}`:"Nouveau produit";
+  $("#p_id").value=p.id; $("#p_name").value=p.name; $("#p_desc").value=p.description||""; $("#p_cat").value=p.category; $("#p_price").value=p.price; $("#p_oldPrice").value=p.oldPrice||""; $("#p_unit").value=p.unit||"piece"; $("#p_stock").value=p.stock; $("#p_minQty").value=p.minQty||1; $("#p_order").value=p.order||0; $("#p_avail").checked=p.availability!==false; $("#p_feat").checked=!!p.featured; $("#p_best").checked=!!p.bestseller; $("#p_new").checked=!!p.isNew; $("#p_images").value=(p.images||[]).join("\n"); $("#p_variants").value=(p.variants||[]).join(", "); $("#p_sizes").value=(p.sizes||[]).join(", "); $("#p_previewImg").src=(p.images&&p.images[0])||"";
+  $("#prodModal").classList.add("open");
+}
+function closeProdModal(){ $("#prodModal").classList.remove("open"); editingProdId=null; }
+function collectProdForm(){
+  const id=$("#p_id").value.trim(); if(!id) throw new Error("ID requis");
+  const images=$("#p_images").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const variants=$("#p_variants").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const sizes=$("#p_sizes").value.split(",").map(s=>s.trim()).filter(Boolean);
+  return {id, name:$("#p_name").value.trim(), description:$("#p_desc").value.trim(), category:$("#p_cat").value, price:parseFloat($("#p_price").value)||0, oldPrice:$("#p_oldPrice").value?parseFloat($("#p_oldPrice").value):null, unit:$("#p_unit").value, stock:parseInt($("#p_stock").value)||0, minQty:parseInt($("#p_minQty").value)||1, availability:$("#p_avail").checked, featured:$("#p_feat").checked, bestseller:$("#p_best").checked, isNew:$("#p_new").checked, images, variants, sizes, order:parseInt($("#p_order").value)||0};
+}
+async function saveProduct(){
+  try{
+    const prod=collectProdForm();
+    if(!prod.name) throw new Error("Nom requis");
+    if(MODE==="cloud" && firebaseApp){
+      if(!currentUser) throw new Error("Auth requise en mode cloud");
+      const {doc,setDoc,collection} = await import("firebase/firestore");
+      await setDoc(doc(firestore,"products",prod.id), {...prod, updatedAt:new Date().toISOString()});
+      toast("Produit sauvegardé en cloud","☁️");
+    }
+    const idx=DB.products.findIndex(x=>x.id===prod.id);
+    if(idx>=0) DB.products[idx]=prod; else DB.products.push(prod);
+    saveLocal(DB); renderProductsTable(); renderKPIs(); renderPreview(); $("#prodFormStatus").textContent="Sauvegardé localement";
+    closeProdModal();
+  }catch(e){ $("#prodFormStatus").textContent="Erreur: "+e.message; toast(e.message,"⚠️"); }
+}
+function duplicateProduct(id){
+  const p=DB.products.find(x=>x.id===id); if(!p) return; const copy={...JSON.parse(JSON.stringify(p)), id:"SW-"+Math.floor(100+Math.random()*900), name:p.name+" (copie)", order:DB.products.length+1}; DB.products.push(copy); saveLocal(DB); renderProductsTable(); renderKPIs(); toast("Dupliqué","📋");
+  if(MODE==="cloud" && firebaseApp && currentUser){ import("firebase/firestore").then(async ({doc,setDoc})=>{ await setDoc(doc(firestore,"products",copy.id), copy); }); }
+}
+async function deleteProduct(){
+  if(!editingProdId) return; if(!confirm("Supprimer ce produit définitivement ?")) return;
+  if(MODE==="cloud" && firebaseApp){ if(!currentUser){ toast("Auth requise","⚠️"); return; } try{ const {doc,deleteDoc}=await import("firebase/firestore"); await deleteDoc(doc(firestore,"products",editingProdId)); }catch(e){ toast("Erreur cloud: "+e.message,"⚠️"); return; } }
+  DB.products=DB.products.filter(x=>x.id!==editingProdId); saveLocal(DB); renderProductsTable(); renderKPIs(); closeProdModal(); toast("Supprimé","🗑️");
+}
+
+// ---------- CATEGORY MODAL ----------
+let editingCatId=null;
+function openCatModal(id){
+  const c= id? DB.categories.find(x=>x.id===id) : {id:"", name:"", desc:"", icon:"🍰", color:"#FFF1E0", order:DB.categories.length+1, visible:true};
+  editingCatId=c.id||null;
+  $("#c_id").value=c.id; $("#c_name").value=c.name; $("#c_desc").value=c.desc||""; $("#c_icon").value=c.icon||""; $("#c_color").value=c.color||"#FFF1E0"; $("#c_order").value=c.order||0; $("#c_visible").checked=c.visible!==false;
+  $("#catModal").classList.add("open");
+}
+function saveCategory(){
+  const id=$("#c_id").value.trim().toLowerCase().replace(/\s+/g,"-"); if(!id){ toast("ID requis","⚠️"); return; }
+  const cat={id, name:$("#c_name").value.trim(), desc:$("#c_desc").value.trim(), icon:$("#c_icon").value.trim()||"🍰", color:$("#c_color").value, order:parseInt($("#c_order").value)||0, visible:$("#c_visible").checked};
+  if(!cat.name){ toast("Nom requis","⚠️"); return; }
+  const idx=DB.categories.findIndex(x=>x.id===id || (editingCatId && x.id===editingCatId));
+  if(idx>=0){ if(editingCatId && editingCatId!==id){ // id changed
+      const oldId=editingCatId; DB.products.forEach(p=>{ if(p.category===oldId) p.category=id; });
+    } DB.categories[idx]=cat; } else DB.categories.push(cat);
+  if(MODE==="cloud" && firebaseApp && currentUser){ import("firebase/firestore").then(async ({doc,setDoc})=>{ await setDoc(doc(firestore,"categories",cat.id), cat); }); }
+  saveLocal(DB); renderCatList(); renderKPIs(); $("#catModal").classList.remove("open"); toast("Catégorie sauvegardée","📂");
+}
+async function deleteCategory(){
+  const id=$("#c_id").value.trim(); if(!id) return; if(!confirm(`Supprimer catégorie ${id} ? Réassignez d'abord les produits.`)) return;
+  const inUse=DB.products.some(p=>p.category===id); if(inUse){ if(!confirm("Des produits utilisent cette catégorie. Les réassigner à la première catégorie ?")) return; const fallback=DB.categories.find(c=>c.id!==id)?.id||"gateaux-secs"; DB.products.forEach(p=>{ if(p.category===id) p.category=fallback; }); }
+  if(MODE==="cloud" && firebaseApp && currentUser){ const {doc,deleteDoc}=await import("firebase/firestore"); await deleteDoc(doc(firestore,"categories",id)); }
+  DB.categories=DB.categories.filter(c=>c.id!==id); saveLocal(DB); renderCatList(); renderKPIs(); $("#catModal").classList.remove("open");
+}
+
+// ---------- FIREBASE LOGIC ----------
+function collectFBForm(){
+  return {apiKey:$("#fb_apiKey").value.trim(), authDomain:$("#fb_authDomain").value.trim(), projectId:$("#fb_projectId").value.trim(), storageBucket:$("#fb_storageBucket").value.trim(), messagingSenderId:$("#fb_messagingSenderId").value.trim(), appId:$("#fb_appId").value.trim(), measurementId:$("#fb_measurementId").value.trim()||undefined};
+}
+async function initFirebaseApp(cfg){
+  const {initializeApp} = await import("firebase/app");
+  const {getFirestore} = await import("firebase/firestore");
+  const {getAuth} = await import("firebase/auth");
+  const {getStorage} = await import("firebase/storage");
+  const app=initializeApp(cfg); const fs=getFirestore(app); const au=getAuth(app); const st=getStorage(app);
+  return {app, fs, au, st};
+}
+async function testFirebaseConnection(){
+  const cfg=collectFBForm(); if(!cfg.apiKey||!cfg.projectId){ $("#fb_status").textContent="Erreur: config incomplète"; toast("Config incomplète","⚠️"); return; }
+  $("#fb_status").textContent="Test en cours...";
+  try{
+    const {app,fs}=await initFirebaseApp(cfg);
+    const {collection,getDocs,limit,query}=await import("firebase/firestore");
+    // try read one doc from any collection (may fail due to rules, but connection ok)
+    try{ await getDocs(query(collection(fs,"products"), limit(1))); $("#fb_status").textContent="CLOUD MODE — CONNECTED : Connexion Firestore OK"; toast("Connexion réussie","☁️"); }
+    catch(e){ if(e.code && e.code.includes("permission")){ $("#fb_status").textContent="Connecté mais règles Firestore bloquent lecture — vérifiez règles (voir README)"; toast("Connecté mais règles à vérifier","⚠️"); } else throw e; }
+  }catch(e){ $("#fb_status").textContent="Erreur connexion: "+(e.message||e); toast("Échec connexion","❌"); }
+}
+async function connectFirebase(){
+  const cfg=collectFBForm(); if(!cfg.apiKey||!cfg.projectId){ toast("Config incomplète","⚠️"); return; }
+  try{
+    const res=await initFirebaseApp(cfg);
+    firebaseApp=res.app; firestore=res.fs; auth=res.au; storage=res.st;
+    FB_CONFIG=cfg; if($("#fb_remember").checked) saveFBCfg(cfg);
+    $("#fb_status").textContent="CLOUD MODE — CONNECTED • "+cfg.projectId;
+    MODE="cloud"; localStorage.setItem(MODE_KEY,"cloud"); $("#modeSelect").value="cloud";
+    // auth listener
+    const {onAuthStateChanged}=await import("firebase/auth");
+    onAuthStateChanged(auth, (user)=>{ currentUser=user; if(user){ $("#loginScreen").classList.remove("open"); } else { if(MODE==="cloud") $("#loginScreen").classList.add("open"); } renderKPIs(); renderFirebaseForm(); });
+    // try load cloud data
+    await loadCloudDataToLocal();
+    renderKPIs(); toast("Connecté au cloud","☁️");
+  }catch(e){ $("#fb_status").textContent="Erreur: "+e.message; toast(e.message,"❌"); }
+}
+async function loadCloudDataToLocal(){
+  if(!firestore) return;
+  const {collection,getDocs}=await import("firebase/firestore");
+  try{
+    const prodSnap=await getDocs(collection(firestore,"products")); const prods=[]; prodSnap.forEach(d=>prods.push({id:d.id, ...d.data()})); if(prods.length){ DB.products=prods; }
+    const catSnap=await getDocs(collection(firestore,"categories")); const cats=[]; catSnap.forEach(d=>cats.push({id:d.id, ...d.data()})); if(cats.length) DB.categories=cats;
+    const setSnap=await getDocs(collection(firestore,"settings")); setSnap.forEach(d=>{ if(d.id==="main"||d.id==="shop") DB.settings={...DB.settings, ...d.data()}; });
+    const themeSnap=await getDocs(collection(firestore,"themes")); themeSnap.forEach(d=>{ if(d.id==="current"||d.id==="main") DB.theme={...DB.theme, ...d.data()}; });
+    saveLocal(DB); renderProductsTable(); renderCatList(); renderHomepageEditor(); renderShopSettings(); renderThemeEditor(); renderPreview();
+  }catch(e){ console.warn(e); toast("Erreur chargement cloud: "+e.message,"⚠️"); }
+}
+function disconnectFirebase(){ firebaseApp=null; firestore=null; auth=null; storage=null; currentUser=null; MODE="demo"; localStorage.setItem(MODE_KEY,"demo"); $("#modeSelect").value="demo"; $("#loginScreen").classList.remove("open"); renderKPIs(); renderFirebaseForm(); toast("Déconnecté — retour démo","ℹ️"); }
+
+async function importDemoToCloud(){
+  if(!firestore || !currentUser){ toast("Connectez-vous en cloud d'abord","⚠️"); return; }
+  if(!confirm("Importer toutes les données DÉMO locales vers Firestore ? Cela écrasera les documents existants avec mêmes IDs. Un backup est recommandé. Continuer ?")) return;
+  const {doc,setDoc}=await import("firebase/firestore");
+  // backup before destructive
+  const backup=JSON.stringify(DB); localStorage.setItem("sweety_backup_before_cloud_import", backup);
+  try{
+    for(const p of DB.products){ await setDoc(doc(firestore,"products",p.id), p); }
+    for(const c of DB.categories){ await setDoc(doc(firestore,"categories",c.id), c); }
+    await setDoc(doc(firestore,"settings","main"), DB.settings);
+    await setDoc(doc(firestore,"themes","current"), DB.theme);
+    toast("Import démo → cloud réussi","☁️");
+  }catch(e){ toast("Erreur import: "+e.message,"❌"); }
+}
+
+// ---------- AUTH ----------
+async function doLogin(){
+  if(!auth){ toast("Firebase non connecté","⚠️"); return; }
+  const email=$("#loginEmail").value.trim(); const pass=$("#loginPass").value; if(!email||!pass){ toast("Email/mdp requis","⚠️"); return; }
+  $("#loginStatus").textContent="Connexion...";
+  try{ const {signInWithEmailAndPassword}=await import("firebase/auth"); await signInWithEmailAndPassword(auth,email,pass); $("#loginStatus").textContent="Connecté"; $("#loginScreen").classList.remove("open"); }
+  catch(e){ $("#loginStatus").textContent="Erreur: "+e.message; }
+}
+async function doLogout(){ if(!auth) return; const {signOut}=await import("firebase/auth"); await signOut(auth); $("#loginScreen").classList.add("open"); }
+
+// ---------- EXPORT/IMPORT ----------
+function exportAllJSON(){
+  const data={...DB, firebaseConfig:FB_CONFIG?{projectId:FB_CONFIG.projectId, authDomain:FB_CONFIG.authDomain}:undefined, exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`sweety-shop-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+}
+function exportProductsCSV(){
+  const headers=["id","name","description","category","price","oldPrice","unit","stock","minQty","availability","featured","bestseller","isNew","images","variants","sizes","order"];
+  const rows=[headers.join(",")]; DB.products.forEach(p=>{ const r=headers.map(h=>{ let v=p[h]; if(Array.isArray(v)) v=v.join("|"); if(v==null) v=""; v=String(v).replace(/"/g,'""'); return `"${v}"`; }); rows.push(r.join(",")); });
+  const blob=new Blob([rows.join("\n")], {type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="sweety-products.csv"; a.click(); URL.revokeObjectURL(url);
+}
+function handleImportFile(file){
+  const reader=new FileReader(); reader.onload=()=>{ try{ const data=JSON.parse(reader.result); // validation
+      if(!data.products || !Array.isArray(data.products)) throw new Error("products manquant ou invalide");
+      $("#bk_preview").textContent=`Aperçu: ${data.products.length} produits, ${data.categories?.length||0} catégories, settings ${data.settings?"oui":"non"}`;
+      window._pendingImport=data;
+    }catch(e){ $("#bk_preview").textContent="Erreur JSON: "+e.message; } }; reader.readAsText(file);
+}
+async function applyImport(){
+  const data=window._pendingImport; if(!data){ toast("Aucun import en attente","⚠️"); return; }
+  if(!confirm("Appliquer cet import ? Cela remplacera les données locales actuelles. Un backup sera créé.")) return;
+  localStorage.setItem("sweety_backup_before_import", JSON.stringify(DB));
+  DB.products=data.products||DB.products; DB.categories=data.categories||DB.categories; if(data.settings) DB.settings={...DB.settings, ...data.settings}; if(data.theme) DB.theme={...DB.theme, ...data.theme};
+  saveLocal(DB); renderProductsTable(); renderCatList(); renderHomepageEditor(); renderShopSettings(); renderThemeEditor(); renderPreview(); renderKPIs();
+  if(MODE==="cloud" && firestore && currentUser && confirm("Également pousser cet import vers le cloud Firestore ?")){ await importDemoToCloud(); }
+  toast("Import appliqué","✅");
+}
+
+// ---------- EVENTS ----------
+function initEvents(){
+  $$(".nav-btn").forEach(b=> b.onclick=()=>{ $$(".nav-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); const v=b.getAttribute("data-view"); $("#viewTitle").textContent=b.textContent.trim(); $$("section[id^='view-']").forEach(s=>s.classList.add("hidden")); $(`#view-${v}`).classList.remove("hidden"); if(v==="preview") renderPreview(); });
+  $("#openSide").onclick=()=>$("#sidebar").classList.add("open"); $("#closeSide").onclick=()=>$("#sidebar").classList.remove("open");
+  $$("[data-close]").forEach(b=> b.onclick=()=>{ b.closest(".modal").classList.remove("open"); });
+  $("#modeSelect").onchange=()=>{ const newMode=$("#modeSelect").value; if(newMode!==MODE){ if(!confirm(`Changer de ${MODE} vers ${newMode} ? Les sources de données diffèrent. Aucune donnée n'est automatiquement écrasée.`)) { $("#modeSelect").value=MODE; return; } MODE=newMode; localStorage.setItem(MODE_KEY,newMode); if(newMode==="demo"){ disconnectFirebase(); } else { if(FB_CONFIG) connectFirebase(); else toast("Configurez Firebase d'abord","⚠️"); } renderKPIs(); } };
+  $("#saveAllBtn").onclick=()=>{ // collect homepage + shop + theme
+    // homepage
+    DB.settings.shopName=$("#h_shopName").value; DB.settings.tagline=$("#h_tagline").value; DB.settings.announcementText=$("#h_announcement").value; DB.settings.announcementVisible=$("#h_announcementVisible").checked;
+    DB.settings.heroBadge=$("#h_heroBadge").value; DB.settings.heroTitle=$("#h_heroTitle").value; DB.settings.heroSubtitle=$("#h_heroSub").value; DB.settings.heroImage=$("#h_heroImage").value; DB.settings.heroCta1=$("#h_cta1").value; DB.settings.heroCta2=$("#h_cta2").value;
+    DB.settings.featuredTitle=$("#h_featuredTitle").value; DB.settings.offersTitle=$("#h_offersTitle").value; DB.settings.catTitle=$("#h_catTitle").value; DB.settings.shopTitle=$("#h_shopTitle").value;
+    DB.settings.aboutTitle=$("#h_aboutTitle").value; DB.settings.aboutText=$("#h_aboutText").value; DB.settings.contactWhatsApp=$("#h_contactWhatsApp").value; DB.settings.contactAddress=$("#h_contactAddress").value; DB.settings.contactHours=$("#h_contactHours").value; DB.settings.googleMapsUrl=$("#h_mapsUrl").value; DB.settings.facebookPageUrl=$("#h_fb").value; DB.settings.instagramUrl=$("#h_insta").value; DB.settings.tiktokUrl=$("#h_tiktok").value; DB.settings.footerText=$("#h_footerText").value;
+    // shop
+    DB.settings.whatsappNumber=$("#s_waNumber").value; DB.settings.contactWhatsApp=$("#s_waDisplay").value||DB.settings.contactWhatsApp; DB.settings.whatsappEnabled=$("#s_waEnabled").checked; DB.settings.facebookEnabled=$("#s_fbEnabled").checked; DB.settings.facebookPageUrl=$("#s_fbUrl").value; DB.settings.messengerLink=$("#s_messenger").value; DB.settings.instagramUrl=$("#s_insta").value; DB.settings.tiktokUrl=$("#s_tiktok").value; DB.settings.contactAddress=$("#s_address").value; DB.settings.googleMapsUrl=$("#s_maps").value; DB.settings.contactHours=$("#s_hours").value; DB.settings.shopOpen=$("#s_shopOpen").checked; DB.settings.deliveryEnabled=$("#s_delivery").checked; DB.settings.currency=$("#s_currency").value; DB.settings.priceFormat=$("#s_priceFormat").value; DB.settings.lowStockThreshold=parseInt($("#s_lowStock").value)||5; DB.settings.minOrder=parseInt($("#s_minOrder").value)||0; DB.settings.deliveryFee=parseInt($("#s_deliveryFee").value)||0; DB.settings.prepTime=$("#s_prepTime").value; DB.settings.deliveryAreas=$("#s_deliveryAreas").value; DB.settings.instructionsText=$("#s_instructions").value;
+    // theme
+    DB.theme.radius=$("#th_radius").value; DB.theme.pageWidth=$("#th_pageWidth").value; DB.theme.sectionPad=$("#th_sectionPad").value; DB.theme.fontDisplay=$("#th_fontDisplay").value; DB.theme.fontBody=$("#th_fontBody").value; DB.customCss=$("#th_customCss").value;
+    saveLocal(DB); if(MODE==="cloud" && firestore && currentUser){ (async()=>{ const {doc,setDoc}=await import("firebase/firestore"); await setDoc(doc(firestore,"settings","main"), DB.settings); await setDoc(doc(firestore,"themes","current"), {...DB.theme, customCss:DB.customCss||""}); toast("Sauvegardé local + cloud","☁️"); })(); } else toast("Sauvegardé localement","💾"); renderKPIs();
+  };
+  $("#prodSearch").oninput=renderProductsTable; $("#prodFilterCat").onchange=renderProductsTable;
+  $("#addProdBtn").onclick=()=>openProdModal(null); $("#saveProdBtn").onclick=saveProduct; $("#deleteProdBtn").onclick=deleteProduct; $("#duplicateProdBtn").onclick=()=>{ if(editingProdId) duplicateProduct(editingProdId); };
+  $("#p_images").oninput=()=>{ const first=$("#p_images").value.split("\n")[0]?.trim(); if(first) $("#p_previewImg").src=first; };
+  $("#p_imageFile").onchange=async (e)=>{ const files=[...e.target.files]; if(!files.length) return; if(MODE==="cloud" && storage && currentUser){ // upload to Firebase Storage
+      try{ const {ref,uploadBytes,getDownloadURL}=await import("firebase/storage"); for(const f of files){ const r=ref(storage, `products/${Date.now()}-${f.name}`); await uploadBytes(r,f); const url=await getDownloadURL(r); const cur=$("#p_images").value; $("#p_images").value=cur? cur+"\n"+url : url; $("#p_previewImg").src=url; toast("Image uploadée cloud","☁️"); } }catch(err){ toast("Upload échoué: "+err.message,"❌"); }
+    } else { // demo base64
+      for(const f of files){ if(f.size> 900*1024){ toast("Image trop grande (>900KB) pour localStorage — utilisez URL ou cloud","⚠️"); continue; } const reader=new FileReader(); reader.onload=()=>{ const b64=reader.result; const cur=$("#p_images").value; $("#p_images").value=cur? cur+"\n"+b64 : b64; $("#p_previewImg").src=b64; }; reader.readAsDataURL(f); }
+    }
+  };
+  $("#addCatBtn").onclick=()=>openCatModal(null); $("#saveCatBtn").onclick=saveCategory; $("#deleteCatBtn").onclick=deleteCategory;
+  $("#previewThemeBtn").onclick=applyPreviewTheme; $("#saveThemeBtn").onclick=()=>{ DB.customCss=$("#th_customCss").value; applyPreviewTheme(); saveLocal(DB); if(MODE==="cloud"&&firestore&&currentUser){ (async()=>{ const {doc,setDoc}=await import("firebase/firestore"); await setDoc(doc(firestore,"themes","current"), {...DB.theme, customCss:DB.customCss}); })(); } toast("Thème sauvegardé","🎨"); renderKPIs(); }; $("#exportThemeBtn").onclick=()=>{ const blob=new Blob([JSON.stringify(DB.theme,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="sweety-theme.json"; a.click(); URL.revokeObjectURL(url); }; $("#resetThemeBtn").onclick=()=>{ if(confirm("Reset thème par défaut ?")){ DB.theme=JSON.parse(JSON.stringify(DEFAULT_THEME)); renderThemeEditor(); applyPreviewTheme(); saveLocal(DB); } };
+  $("#presetSelect").onchange=()=>{ const v=$("#presetSelect").value; if(!v) return; DB.theme={...DB.theme, ...PRESETS[v]}; renderThemeEditor(); applyPreviewTheme(); toast("Preset appliqué: "+v,"🎨"); };
+  $("#saveShopBtn").onclick=()=>$("#saveAllBtn").click();
+  $("#fb_saveBtn").onclick=()=>{ const cfg=collectFBForm(); if(!cfg.apiKey||!cfg.projectId){ toast("Config incomplète","⚠️"); return; } FB_CONFIG=cfg; saveFBCfg(cfg); renderFirebaseForm(); renderKPIs(); toast("Config sauvegardée (navigateur)","💾"); };
+  $("#fb_testBtn").onclick=testFirebaseConnection; $("#fb_connectBtn").onclick=connectFirebase; $("#fb_disconnectBtn").onclick=disconnectFirebase;
+  $("#fb_clearBtn").onclick=()=>{ if(confirm("Effacer config Firebase de ce navigateur ?")){ localStorage.removeItem(FB_CFG_KEY); FB_CONFIG=null; firebaseApp=null; renderFirebaseForm(); renderKPIs(); toast("Config effacée","🗑️"); } };
+  $("#fb_exportBtn").onclick=()=>{ if(!FB_CONFIG){ toast("Pas de config","⚠️"); return; } const blob=new Blob([JSON.stringify(FB_CONFIG,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="firebase-config.json"; a.click(); URL.revokeObjectURL(url); };
+  $("#fb_importBtn").onclick=()=>$("#fb_importFile").click(); $("#fb_importFile").onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const cfg=JSON.parse(r.result); FB_CONFIG=cfg; saveFBCfg(cfg); renderFirebaseForm(); toast("Config importée","📥"); }catch(err){ toast("JSON invalide","❌"); } }; r.readAsText(f); };
+  $("#fb_importDemoToCloudBtn").onclick=importDemoToCloud;
+  $("#fb_exportCloudToLocalBtn").onclick=()=>{ exportAllJSON(); };
+  $("#bk_exportAllBtn").onclick=exportAllJSON; $("#exportQuickBtn").onclick=exportAllJSON; $("#bk_exportProdCSVBtn").onclick=exportProductsCSV; $("#exportCSVBtn").onclick=exportProductsCSV;
+  $("#bk_importFile").onchange=(e)=>{ const f=e.target.files[0]; if(f) handleImportFile(f); };
+  $("#bk_applyImportBtn").onclick=applyImport;
+  $("#bk_clearLocalBtn").onclick=()=>{ if(confirm("Effacer toutes données locales et réinitialiser démo ?")){ localStorage.removeItem(LS_KEY); DB=getDefaultDB(); saveLocal(DB); renderProductsTable(); renderCatList(); renderHomepageEditor(); renderShopSettings(); renderThemeEditor(); renderKPIs(); renderPreview(); toast("Local effacé","🗑️"); } };
+  $("#bk_downloadConfigBtn").onclick=()=>{ if(!FB_CONFIG){ toast("Pas de config","⚠️"); return; } const blob=new Blob([JSON.stringify(FB_CONFIG,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="firebase-config.json"; a.click(); URL.revokeObjectURL(url); };
+  $("#bk_copyConfigBtn").onclick=()=>{ if(!FB_CONFIG) return; navigator.clipboard.writeText(JSON.stringify(FB_CONFIG,null,2)).then(()=>toast("Copié","📋")); };
+  $("#resetDemoBtn").onclick=()=>{ if(confirm("Réinitialiser toutes les données démo par défaut ?")){ DB=getDefaultDB(); saveLocal(DB); renderProductsTable(); renderCatList(); renderHomepageEditor(); renderShopSettings(); renderThemeEditor(); renderPreview(); renderKPIs(); toast("Démo réinitialisée","♻️"); } };
+  $("#loginBtn").onclick=doLogin; $("#logoutBtn").onclick=doLogout;
+  $("#previewRefreshBtn").onclick=renderPreview;
+  // homepage auto-save on input blur
+  $$("#view-homepage input, #view-homepage textarea").forEach(inp=>{ inp.addEventListener("change", ()=>{ /* defer to saveAll */ }); });
+}
+
+function bootstrap(){
+  $("#modeSelect").value=MODE; renderKPIs(); renderProductsTable(); renderCatList(); renderHomepageEditor(); renderShopSettings(); renderThemeEditor(); renderFirebaseForm(); renderPreview(); initEvents(); applyPreviewTheme();
+  if(MODE==="cloud" && FB_CONFIG){ connectFirebase(); }
+}
+
+bootstrap();
+</script>
+</body>
+</html>
