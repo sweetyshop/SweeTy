@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SweeTy Shop — Admin (No Storage - 100% Free)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+  }
+}
+</script>
+<style>
+:root{--bg:#FFF8F0;--surface:#fff;--text:#2B1A10;--soft:#8A6D5D;--primary:#8B4513;--border:#F0DDC6;--accent:#D4A017;--danger:#C62828;--ok:#2E7D32;--shadow:0 8px 30px rgba(43,26,16,.08);--r:16px}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui;background:var(--bg);color:var(--text)}
+button{font-family:inherit}
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:fixed;z-index:60;transform:translateX(-100%);transition:.25s;width:260px}.sidebar.open{transform:translateX(0)}}
+.sidebar{background:#1F130C;color:#E8D5C4;padding:18px 14px;display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 6px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#8B4513);display:grid;place-items:center;color:#fff;font-weight:800;font-family:Playfair Display}
+.nav{display:grid;gap:6px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid transparent;cursor:pointer;background:transparent;color:#E8D5C4;font-size:14px;font-weight:500;text-align:left}
+.nav-btn:hover{background:rgba(255,255,255,.08)}.nav-btn.active{background:#fff;color:#1F130C}
+.badge{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+.badge-demo{background:#FFF3E0;color:#E65100;border-color:#FFE0B2}
+.badge-cloud{background:#E8F5E9;color:#2E7D32;border-color:#C8E6C9}
+.badge-free{background:#E3F2FD;color:#1565C0;border-color:#BBDEFB}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(255,248,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.main{padding:18px;max-width:1400px;width:100%}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+.kpi b{font-size:22px;display:block}.kpi span{font-size:12px;color:var(--soft)}
+.h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:600;font-size:13px}
+.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}.btn-accent{background:var(--accent);color:#2B1A10;border-color:var(--accent)}.btn-danger{background:#FFEBEE;color:var(--danger);border-color:#FFCDD2}
+.input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:13px;outline:none}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(139,69,19,.12)}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:10px 0 6px;display:block}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+th{background:#FFF6EB;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft)}
+.modal{position:fixed;inset:0;z-index:80;display:none}.modal.open{display:block}
+.backdrop{position:absolute;inset:0;background:rgba(31,19,12,.5);backdrop-filter:blur(6px)}
+.panel{position:relative;max-width:860px;width:calc(100% - 20px);margin:20px auto;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:calc(100vh - 40px);overflow:auto;padding:18px}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(120px);background:#1F130C;color:#fff;padding:12px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;gap:8px;z-index:90;transition:.35s}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.hidden{display:none !important}
+.code{font-family:ui-monospace,monospace;font-size:12px;background:#1F130C;color:#FFE9C7;padding:12px;border-radius:10px;overflow:auto;white-space:pre-wrap}
+.login{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 600px at 80% 10%, #FFE8C7, #FFF8F0);display:none;place-items:center;padding:16px}
+.login.open{display:grid}
+.login-card{width:min(420px,100%);background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.help-box{background:#E3F2FD;border:1px solid #BBDEFB;border-radius:12px;padding:12px;font-size:12px;color:#0D47A1}
+</style>
+</head>
+<body>
+<div class="login" id="loginScreen">
+  <div class="login-card">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="mark">S</div><div><b>SweeTy Shop Admin</b><div style="font-size:12px;color:#8A6D5D">Connexion requise en mode Cloud (100% gratuit sans Storage)</div></div></div>
+    <div style="font-size:12px;background:#E3F2FD;border:1px solid #BBDEFB;border-radius:12px;padding:10px;margin-bottom:10px">💡 Astuce 100% gratuit: Vous n'utilisez PAS Firebase Storage. Images = liens gratuits (imgbb, postimages, GitHub). Firestore + Auth restent gratuits.</div>
+    <label class="label">Email admin</label><input class="input" id="loginEmail" type="email" placeholder="admin@sweety.dz">
+    <label class="label">Mot de passe</label><input class="input" id="loginPass" type="password" placeholder="••••••••">
+    <div class="row" style="margin-top:12px"><button class="btn btn-primary" id="loginBtn" style="flex:1">Se connecter</button><button class="btn" id="logoutBtn">Déconnexion</button></div>
+    <div id="loginStatus" style="font-size:12px;margin-top:10px"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="mark">S</div><div><b>SweeTy Shop</b><div style="font-size:11px;opacity:.8">Admin FREE - No Storage</div></div><button class="btn" style="margin-left:auto" id="closeSide">✕</button></div>
+    <div class="nav">
+      <button class="nav-btn active" data-view="dashboard">📊 Tableau de bord</button>
+      <button class="nav-btn" data-view="products">🍰 Produits</button>
+      <button class="nav-btn" data-view="categories">📂 Catégories</button>
+      <button class="nav-btn" data-view="images">🖼️ Images gratuites - Guide</button>
+      <button class="nav-btn" data-view="homepage">🏠 Page d'accueil</button>
+      <button class="nav-btn" data-view="theme">🎨 Thème</button>
+      <button class="nav-btn" data-view="shop">⚙️ Boutique</button>
+      <button class="nav-btn" data-view="firebase">☁️ Firebase (sans Storage)</button>
+      <button class="nav-btn" data-view="backup">💾 Sauvegarde</button>
+    </div>
+    <div style="margin-top:auto;padding:10px 6px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;display:grid;gap:10px">
+      <div><span id="modeBadge" class="badge badge-demo">DEMO MODE</span> <span class="badge badge-free">FREE NO STORAGE</span></div>
+      <div id="authState">Non connecté</div>
+      <div>Dernier save: <span id="lastSave">—</span></div>
+      <a class="btn" href="index.html" target="_blank" style="color:#1F130C">Voir boutique ↗</a>
+    </div>
+  </aside>
+  <div style="display:flex;flex-direction:column;min-width:0">
+    <div class="topbar">
+      <div style="display:flex;gap:10px;align-items:center"><button class="btn" id="openSide">☰</button><b id="viewTitle">Tableau de bord</b><span id="cloudStatus" class="badge badge-demo">DEMO</span><span class="badge badge-free">100% FREE - No Storage cost</span></div>
+      <div class="row"><select id="modeSelect" style="width:auto"><option value="demo">Demo Mode</option><option value="cloud">Firebase Cloud Mode (free)</option></select><button class="btn btn-accent" id="saveAllBtn">💾 Sauvegarder</button></div>
+    </div>
+    <main class="main">
+      <section id="view-dashboard">
+        <div class="help-box" style="margin-bottom:12px">🎉 <b>Mode 100% GRATUIT activé:</b> Vous utilisez Firestore + Auth seulement. Pas de Firebase Storage = pas de facturation. Images = liens externes gratuits (imgbb.com, postimages.org, ou dossier GitHub assets/). Coût: 0 DZD / mois sur Spark plan.</div>
+        <div class="kpi" id="kpiRow"></div>
+        <div class="grid2" style="margin-top:14px">
+          <div class="card"><div class="h"><b>État boutique</b><span id="shopOpenBadge" class="badge"></span></div><div id="shopStateBox" style="font-size:13px;color:#8A6D5D"></div></div>
+          <div class="card"><div class="h"><b>Firebase (sans Storage)</b></div><div id="firebaseStateBox" style="font-size:13px"></div><div class="code" id="configPreview" style="margin-top:10px"></div></div>
+        </div>
+      </section>
+
+      <section id="view-products" class="hidden">
+        <div class="h"><b>Produits - Images par lien gratuit</b><div class="row"><input class="input" id="prodSearch" placeholder="Rechercher..." style="width:200px"><select id="prodFilterCat" style="width:auto"><option value="all">Toutes</option></select><button class="btn btn-primary" id="addProdBtn">+ Ajouter</button></div></div>
+        <div class="table-wrap"><table id="prodTable"><thead><tr><th>Produit</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th>Statut</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="view-images" class="hidden">
+        <div class="card">
+          <h2 style="margin:0 0 8px">🖼️ Comment ajouter des images GRATUITEMENT (sans Firebase Storage)</h2>
+          <div class="grid2">
+            <div>
+              <h3>Option A — imgbb.com (le plus rapide - 30 sec)</h3>
+              <ol style="font-size:13px;line-height:1.8">
+                <li>Va sur <a href="https://imgbb.com" target="_blank" style="text-decoration:underline;color:#1565C0">https://imgbb.com</a> (pas besoin de compte)</li>
+                <li>Clique <b>Start uploading</b> → choisis ta photo de gâteau (max 32MB)</li>
+                <li>Après upload, clique <b>Embed codes</b> → choisis <b>Direct links</b></li>
+                <li>Copie le lien qui finit par .jpg / .png (ex: https://i.ibb.co/xxxx/cake.jpg)</li>
+                <li>Dans SweeTy Admin → Produits → Editer → colle ce lien dans <b>Images (URLs)</b></li>
+                <li>Une URL par ligne. 1ère = image principale.</li>
+              </ol>
+              <h3>Option B — GitHub assets (100% pro, reste dans ton repo)</h3>
+              <ol style="font-size:13px;line-height:1.8">
+                <li>Dans ton repo GitHub `sweety-shop`, crée dossier `assets/images`</li>
+                <li>Upload tes photos (compresse à ~300KB avec ton téléphone)</li>
+                <li>Clique sur l'image → bouton <b>Raw</b> → copie l'URL</li>
+                <li>Exemple: <code>https://raw.githubusercontent.com/USER/sweety-shop/main/assets/images/croissant.jpg</code></li>
+                <li>Colle dans Admin → Produits → Images</li>
+              </ol>
+            </div>
+            <div>
+              <div class="help-box">
+                <b>💡 Conseils pour images légères (important pour vitesse site)</b><br>
+                - Taille: 800x600px suffit (pas besoin 4000px)<br>
+                - Poids: vise 150-300KB par image<br>
+                - Sur téléphone: avant upload, utilise app "Compress Image"<br>
+                - Format: JPG pour gâteaux, PNG si fond transparent<br>
+                - Nombre: 1-3 images par produit max
+              </div>
+              <div style="margin-top:12px" class="card">
+                <b>Test rapide de lien image</b><br>
+                <label class="label">Colle un lien imgbb ici pour tester</label>
+                <input class="input" id="testImageUrl" placeholder="https://i.ibb.co/.../cake.jpg">
+                <button class="btn btn-primary" id="testImageBtn" style="margin-top:8px">Tester image</button>
+                <img id="testImagePreview" src="" style="width:100%;margin-top:10px;border-radius:12px;display:none;background:#FFF6EB;aspect-ratio:4/3;object-fit:cover">
+                <div id="testImageStatus" style="font-size:12px;margin-top:6px;color:#8A6D5D"></div>
+              </div>
+              <div style="margin-top:12px" class="code">Exemple liens valides:
+https://i.ibb.co/XXXX/croissant.jpg
+https://i.postimg.cc/XXXX/cake.jpg
+https://raw.githubusercontent.com/USER/repo/main/assets/cake.jpg
+https://images.unsplash.com/photo-... (pour test)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-categories" class="hidden"><div class="h"><b>Catégories</b><button class="btn btn-primary" id="addCatBtn">+ Catégorie</button></div><div id="catList" class="grid2"></div></section>
+      <section id="view-homepage" class="hidden"><div class="card"><div class="h"><b>Page d'accueil</b></div><div class="grid2"><div><label class="label">Nom boutique</label><input class="input" id="h_shopName"><label class="label">Tagline</label><input class="input" id="h_tagline"><label class="label">Annonce</label><input class="input" id="h_announcement"><label class="label">Hero titre</label><textarea id="h_heroTitle" rows="2"></textarea><label class="label">Hero sous-titre</label><textarea id="h_heroSub" rows="2"></textarea><label class="label">Image hero URL (imgbb)</label><input class="input" id="h_heroImage"></div><div><label class="label">Adresse / Horaires / WhatsApp</label><input class="input" id="h_contactAddress"><input class="input" id="h_contactHours"><input class="input" id="h_contactWhatsApp"><label class="label">Facebook / Insta</label><input class="input" id="h_fb"><input class="input" id="h_insta"><label class="label">Footer</label><textarea id="h_footerText" rows="3"></textarea></div></div></div></section>
+      <section id="view-theme" class="hidden"><div class="card"><b>Thème</b><div class="row" style="margin-top:10px"><select id="presetSelect"><option value="">Preset</option><option value="luxury">Luxury Chocolate</option><option value="pink">Pink Pastry</option><option value="creamGold">Cream & Gold</option><option value="minimal">Minimal</option><option value="dark">Dark Luxury</option></select><button class="btn" id="applyPresetBtn">Appliquer</button></div><div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px"></div></div></section>
+      <section id="view-shop" class="hidden"><div class="card"><b>Boutique & WhatsApp</b><label class="label">Numéro WhatsApp international sans + (ex 213555123456)</label><input class="input" id="s_waNumber"><label class="label">Affichage WhatsApp</label><input class="input" id="s_waDisplay"><label class="label">Facebook Page</label><input class="input" id="s_fbUrl"><label class="label">Messenger m.me</label><input class="input" id="s_messenger"></div></section>
+      <section id="view-firebase" class="hidden"><div class="card"><div class="h"><b>Firebase (Firestore + Auth seulement - SANS Storage - 100% gratuit)</b><span id="fbConnBadge" class="badge badge-demo">NON CONFIGURÉ</span></div><div class="help-box" style="margin-bottom:10px">Vous n'avez PAS besoin d'activer Storage. Laissez Storage désactivé dans Firebase Console. Vous utilisez seulement: Firestore + Authentication. Tous deux gratuits sur Spark plan.</div><div class="grid2"><div><label class="label">API Key</label><input class="input" id="fb_apiKey"><label class="label">Auth Domain</label><input class="input" id="fb_authDomain"><label class="label">Project ID</label><input class="input" id="fb_projectId"><label class="label">Storage Bucket (peut rester vide)</label><input class="input" id="fb_storageBucket" placeholder="Optionnel - pas nécessaire"><label class="label">Messaging Sender ID</label><input class="input" id="fb_messagingSenderId"><label class="label">App ID</label><input class="input" id="fb_appId"></div><div><div class="code" id="fb_status">Non configuré - pas de coût Storage</div><div class="row" style="margin-top:10px"><button class="btn btn-primary" id="fb_saveBtn">Save</button><button class="btn" id="fb_testBtn">Test Connection</button><button class="btn btn-accent" id="fb_connectBtn">Connect</button><button class="btn" id="fb_disconnectBtn">Disconnect</button></div><div class="row" style="margin-top:8px"><button class="btn" id="fb_exportBtn">Export firebase-config.json</button><button class="btn" id="fb_clearBtn">Clear</button></div><div style="margin-top:12px"><button class="btn btn-accent" id="fb_importDemoToCloudBtn">Import Demo Data to Cloud (gratuit)</button></div></div></div></div></section>
+      <section id="view-backup" class="hidden"><div class="card"><b>Sauvegarde</b><div class="row" style="margin-top:10px"><button class="btn btn-primary" id="bk_exportAllBtn">Export JSON complet</button><button class="btn" id="bk_downloadConfigBtn">Télécharger firebase-config.json pour GitHub</button></div><input type="file" id="bk_importFile" accept=".json" style="margin-top:10px"><div class="code" id="bk_preview" style="margin-top:10px">Aperçu import...</div><button class="btn btn-accent" id="bk_applyImportBtn" style="margin-top:8px">Appliquer import</button></div></section>
+    </main>
+  </div>
+</div>
+
+<div class="modal" id="prodModal"><div class="backdrop" data-close></div><div class="panel">
+  <div class="h"><b id="prodModalTitle">Produit - Image par lien gratuit</b><button class="btn" data-close>✕</button></div>
+  <div class="help-box" style="margin-bottom:10px">🖼️ Pas de Firebase Storage ici = 0 coût. Collez des liens imgbb.com / postimages.org / GitHub raw. Une URL par ligne. 1ère = principale.</div>
+  <div class="grid2">
+    <div>
+      <label class="label">ID</label><input class="input" id="p_id">
+      <label class="label">Nom</label><input class="input" id="p_name">
+      <label class="label">Description</label><textarea id="p_desc" rows="3"></textarea>
+      <label class="label">Catégorie</label><select id="p_cat"></select>
+      <label class="label">Images - LIENS GRATUITS (une par ligne)</label><textarea id="p_images" rows="5" placeholder="https://i.ibb.co/xxxx/cake1.jpg&#10;https://i.ibb.co/xxxx/cake2.jpg&#10;https://raw.githubusercontent.com/.../cake3.jpg"></textarea>
+      <div style="font-size:11px;color:#0D47A1;background:#E3F2FD;border:1px solid #BBDEFB;border-radius:8px;padding:8px;margin-top:6px">Comment obtenir lien? Va sur imgbb.com → Upload → Direct link → copie. Ou upload dans GitHub assets/ → Raw → copie. PAS de fichier local lourd.</div>
+      <label class="label">Variantes (virgule)</label><input class="input" id="p_variants">
+      <label class="label">Tailles (virgule)</label><input class="input" id="p_sizes">
+    </div>
+    <div>
+      <label class="label">Prix DZD / Ancien / Unité / Stock / Min / Ordre</label><div class="row"><input class="input" id="p_price" type="number" style="flex:1"><input class="input" id="p_oldPrice" type="number" style="flex:1"><select id="p_unit" style="flex:1"><option value="piece">pièce</option><option value="kg">kg</option><option value="box">box</option><option value="cup">cup</option></select></div><div class="row" style="margin-top:8px"><input class="input" id="p_stock" type="number" style="flex:1" placeholder="Stock"><input class="input" id="p_minQty" type="number" style="flex:1" placeholder="Min"><input class="input" id="p_order" type="number" style="flex:1" placeholder="Ordre"></div>
+      <div class="row" style="margin-top:10px"><label><input type="checkbox" id="p_avail" checked> Dispo</label><label><input type="checkbox" id="p_feat"> Featured</label><label><input type="checkbox" id="p_best"> Best</label><label><input type="checkbox" id="p_new"> Nouveau</label></div>
+      <label class="label">Aperçu image principale (depuis lien)</label><img id="p_previewImg" src="" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;border:1px solid var(--border);background:#FFF6EB">
+      <div style="font-size:11px;color:#8A6D5D;margin-top:4px" id="p_linkStatus">Colle un lien valide pour voir aperçu</div>
+      <div class="row" style="margin-top:14px"><button class="btn btn-primary" id="saveProdBtn">Sauvegarder</button><button class="btn btn-danger" id="deleteProdBtn">Supprimer</button></div>
+      <div id="prodFormStatus" style="font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="modal" id="catModal"><div class="backdrop" data-close></div><div class="panel" style="max-width:480px"><div class="h"><b>Catégorie</b><button class="btn" data-close>✕</button></div><label class="label">ID</label><input class="input" id="c_id"><label class="label">Nom</label><input class="input" id="c_name"><label class="label">Desc</label><input class="input" id="c_desc"><label class="label">Icône</label><input class="input" id="c_icon"><label class="label">Couleur</label><input class="input" id="c_color" type="color"><div class="row" style="margin-top:10px"><button class="btn btn-primary" id="saveCatBtn">Sauver</button><button class="btn btn-danger" id="deleteCatBtn">Supprimer</button></div></div></div>
+
+<div class="toast" id="toast"><span id="toastIcon">✨</span><span id="toastText">Msg</span></div>
+
+<script type="module">
+const LS_KEY="sweety_local_db"; const FB_CFG_KEY="sweety_firebase_config"; const MODE_KEY="sweety_mode";
+const DEFAULT_PRODUCTS=[
+  {id:"SW-001", name:"Assortiment gâteaux secs prestige", description:"Box 500g sablés fondants", category:"gateaux-secs", price:2800, oldPrice:3200, unit:"box", stock:25, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=800&auto=format&fit=crop"], variants:["Classique","Chocolat"], sizes:["250g","500g"], order:1},
+  {id:"SW-002", name:"Baklawa royale", description:"Feuilletée amandes miel", category:"gateaux-secs", price:3500, unit:"kg", stock:12, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1519869325930-281384150729?q=80&w=800&auto=format&fit=crop"], variants:["Amandes"], sizes:["500g","1kg"], order:2},
+  {id:"SW-003", name:"Mille-feuille vanille", description:"Feuilletage caramélisé", category:"patisseries", price:380, oldPrice:450, unit:"piece", stock:30, minQty:1, availability:true, featured:true, bestseller:true, isNew:false, images:["https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?q=80&w=800&auto=format&fit=crop"], variants:["Vanille"], sizes:["Individuel"], order:3}
+];
+const DEFAULT_CATEGORIES=[
+  {id:"gateaux-secs", name:"Gâteaux secs", desc:"Sablés", icon:"🍪", color:"#FFF1E0", order:1, visible:true},
+  {id:"patisseries", name:"Pâtisseries", desc:"Fines", icon:"🧁", color:"#FFE4E6", order:2, visible:true},
+  {id:"cakes", name:"Cakes", desc:"Anniv", icon:"🎂", color:"#FFF8E1", order:3, visible:true},
+  {id:"croissants", name:"Croissants", desc:"Pur beurre", icon:"🥐", color:"#FFECB3", order:4, visible:true},
+  {id:"coffee", name:"Café", desc:"Espresso", icon:"☕", color:"#EFEBE9", order:5, visible:true},
+  {id:"juices", name:"Jus", desc:"Frais", icon:"🧃", color:"#E0F2F1", order:6, visible:true},
+  {id:"offres", name:"Offres", desc:"Promos", icon:"🎁", color:"#F3E5F5", order:7, visible:true}
+];
+const DEFAULT_SETTINGS={shopName:"SweeTy Shop", tagline:"Pâtisseries d'exception", heroTitle:"Des douceurs qui racontent l'Algérie", heroSubtitle:"Artisanal à Tlemcen", heroImage:"https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop", announcementText:"Livraison Tlemcen - Commandez avant 16h", contactAddress:"Tlemcen", contactHours:"08:00-22:00", contactWhatsApp:"+213 555 123 456", facebookPageUrl:"https://facebook.com/sweety.shop.tlemcen", messengerLink:"https://m.me/sweety.shop.tlemcen", whatsappNumber:"213555123456", whatsappEnabled:true, facebookEnabled:true, currency:"DZD", priceFormat:"{price} DZD", lowStockThreshold:5, shopOpen:true, deliveryEnabled:true, footerText:"Artisan pâtissier Tlemcen - 100% FREE mode"};
+const DEFAULT_THEME={bg:"#FFFBF5",bgSoft:"#FFF6EB",surface:"#FFFFFF",text:"#3B2314",textSoft:"#7A5A45",primary:"#8B4513",accent:"#D4A017",border:"#F0DDC6"};
+const PRESETS={luxury:{bg:"#FFFBF5",primary:"#8B4513",accent:"#D4A017"},pink:{bg:"#FFF7FA",primary:"#C2185B",accent:"#FFB6C1"},creamGold:{bg:"#FFFEF8",primary:"#6D4C41",accent:"#FFD700"},minimal:{bg:"#FAFAFA",primary:"#212121",accent:"#212121"},dark:{bg:"#1A120E",primary:"#D4A017",accent:"#FFD700"}};
+
+const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
+function toast(m,i="✨"){ $("#toastText").textContent=m; $("#toastIcon").textContent=i; $("#toast").classList.add("show"); setTimeout(()=>$("#toast").classList.remove("show"),3000); }
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null"); }catch{return null} }
+function saveLocal(db){ localStorage.setItem(LS_KEY, JSON.stringify(db)); $("#lastSave").textContent=new Date().toLocaleString(); }
+function getDefaultDB(){ return {products:JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)), categories:JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), settings:JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), theme:JSON.parse(JSON.stringify(DEFAULT_THEME))} }
+function loadFBCfg(){ try{ return JSON.parse(localStorage.getItem(FB_CFG_KEY)||"null"); }catch{return null} }
+let DB=(()=>{ const l=loadLocal(); return l? {...getDefaultDB(), ...l, settings:{...getDefaultDB().settings, ...(l.settings||{})}, theme:{...getDefaultDB().theme, ...(l.theme||{})}} : getDefaultDB(); })();
+let FB_CONFIG=loadFBCfg(); let MODE=localStorage.getItem(MODE_KEY)||"demo"; let firebaseApp=null, firestore=null, auth=null, currentUser=null;
+
+function renderKPIs(){
+  const p=DB.products;
+  $("#kpiRow").innerHTML=`<div class="card"><span>Total</span><b>${p.length}</b></div><div class="card"><span>Dispo</span><b style="color:var(--ok)">${p.filter(x=>x.availability&&x.stock>0).length}</b></div><div class="card"><span>Épuisés</span><b style="color:var(--danger)">${p.filter(x=>!x.availability||x.stock<=0).length}</b></div><div class="card"><span>Mode</span><b>${MODE.toUpperCase()} FREE</b></div>`;
+  $("#shopStateBox").innerHTML=`Boutique: ${DB.settings.shopOpen?"Ouverte":"Fermée"} • WhatsApp: ${DB.settings.whatsappNumber}<br>Images: liens externes gratuits (0 coût)`;
+  $("#firebaseStateBox").innerHTML=`Mode: <b>${MODE}</b><br>Config: ${FB_CONFIG?"Oui":"Non"}<br>Connecté: ${firebaseApp?"Oui - FREE (Firestore+Auth seulement)":"Non"}<br>User: ${currentUser?currentUser.email:"—"}<br><span style="font-size:11px">💰 Coût Storage: 0 DZD car non utilisé. Vous utilisez imgbb/GitHub pour images.</span>`;
+  $("#configPreview").textContent=FB_CONFIG? JSON.stringify({projectId:FB_CONFIG.projectId}, null,2):"Pas de config";
+  $("#modeBadge").textContent= MODE==="cloud"&&firebaseApp?"CLOUD MODE — CONNECTED (FREE)":"DEMO MODE — FREE";
+  $("#cloudStatus").textContent= MODE==="cloud"&&firebaseApp?"CLOUD FREE CONNECTED":"DEMO FREE";
+  $("#fbConnBadge").textContent= firebaseApp?"CLOUD FREE CONNECTED - No Storage cost":"NON CONFIGURÉ";
+  $("#authState").textContent=currentUser?`Connecté: ${currentUser.email}`:"Non connecté";
+}
+
+function renderProducts(){
+  const tbody=$("#prodTable tbody"); tbody.innerHTML="";
+  const q=$("#prodSearch").value.toLowerCase(); const cat=$("#prodFilterCat").value;
+  let list=[...DB.products]; if(q) list=list.filter(p=>(p.name+p.id).toLowerCase().includes(q)); if(cat!=="all") list=list.filter(p=>p.category===cat);
+  list.forEach(p=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><div style="display:flex;gap:8px;align-items:center"><img src="${(p.images&&p.images[0])||""}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;background:#FFF6EB"><div><b style="font-size:13px">${p.name}</b><div style="font-size:11px;color:#8A6D5D">${p.id} • ${p.unit}</div></div></div></td><td>${p.category}</td><td>${p.price} DZD</td><td>${p.stock}</td><td>${p.availability?"● dispo":"● épuisé"}</td><td><button class="btn" data-edit="${p.id}">Éditer</button></td>`;
+    tbody.appendChild(tr);
+  });
+  $$("[data-edit]").forEach(b=>b.onclick=()=>openProd(b.getAttribute("data-edit")));
+}
+function renderCats(){
+  const wrap=$("#catList"); wrap.innerHTML=""; const sel=$("#prodFilterCat"); sel.innerHTML=`<option value="all">Toutes</option>`; const pc=$("#p_cat"); pc.innerHTML="";
+  DB.categories.forEach(c=>{
+    const d=document.createElement("div"); d.className="card"; d.innerHTML=`<div class="h"><b>${c.icon} ${c.name}</b><span>${c.id}</span></div><div style="font-size:12px">${c.desc}</div><button class="btn" data-ec="${c.id}" style="margin-top:8px">Éditer</button>`;
+    wrap.appendChild(d);
+    const o1=document.createElement("option"); o1.value=c.id; o1.textContent=c.name; sel.appendChild(o1);
+    const o2=document.createElement("option"); o2.value=c.id; o2.textContent=c.name; pc.appendChild(o2);
+  });
+  $$("[data-ec]").forEach(b=>b.onclick=()=>openCat(b.getAttribute("data-ec")));
+}
+
+let editingProdId=null;
+function openProd(id){
+  const p= id? DB.products.find(x=>x.id===id) : {id:"SW-"+Math.floor(100+Math.random()*900), name:"", description:"", category:DB.categories[0]?.id, price:1000, oldPrice:"", unit:"piece", stock:10, minQty:1, availability:true, featured:false, bestseller:false, isNew:true, images:[], variants:[], sizes:[], order:DB.products.length+1};
+  editingProdId=p.id;
+  $("#prodModalTitle").textContent=id?`Éditer ${p.id} (lien image gratuit)`:"Nouveau produit (lien gratuit)";
+  $("#p_id").value=p.id; $("#p_name").value=p.name; $("#p_desc").value=p.description||""; $("#p_cat").value=p.category; $("#p_price").value=p.price; $("#p_oldPrice").value=p.oldPrice||""; $("#p_unit").value=p.unit||"piece"; $("#p_stock").value=p.stock; $("#p_minQty").value=p.minQty; $("#p_order").value=p.order; $("#p_avail").checked=p.availability; $("#p_feat").checked=!!p.featured; $("#p_best").checked=!!p.bestseller; $("#p_new").checked=!!p.isNew; $("#p_images").value=(p.images||[]).join("\n"); $("#p_variants").value=(p.variants||[]).join(", "); $("#p_sizes").value=(p.sizes||[]).join(", "); $("#p_previewImg").src=(p.images&&p.images[0])||""; $("#p_linkStatus").textContent=p.images&&p.images[0]? "Lien valide - aperçu OK":"Colle lien imgbb / GitHub raw";
+  $("#prodModal").classList.add("open");
+}
+function collectProd(){
+  const images=$("#p_images").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(images.some(u=>!u.startsWith("http"))){ throw new Error("Chaque image doit être un lien http(s) - ex https://i.ibb.co/... . Pas de fichier local."); }
+  return {id:$("#p_id").value.trim(), name:$("#p_name").value.trim(), description:$("#p_desc").value.trim(), category:$("#p_cat").value, price:parseFloat($("#p_price").value)||0, oldPrice:$("#p_oldPrice").value?parseFloat($("#p_oldPrice").value):null, unit:$("#p_unit").value, stock:parseInt($("#p_stock").value)||0, minQty:parseInt($("#p_minQty").value)||1, availability:$("#p_avail").checked, featured:$("#p_feat").checked, bestseller:$("#p_best").checked, isNew:$("#p_new").checked, images, variants:$("#p_variants").value.split(",").map(s=>s.trim()).filter(Boolean), sizes:$("#p_sizes").value.split(",").map(s=>s.trim()).filter(Boolean), order:parseInt($("#p_order").value)||0};
+}
+async function saveProd(){
+  try{
+    const prod=collectProd(); if(!prod.name) throw new Error("Nom requis");
+    if(MODE==="cloud"&&firebaseApp){
+      if(!currentUser) throw new Error("Connectez-vous en cloud d'abord");
+      const {doc,setDoc}=await import("firebase/firestore");
+      await setDoc(doc(firestore,"products",prod.id), {...prod, updatedAt:new Date().toISOString()});
+      toast("Sauvegardé en cloud FREE (sans Storage)","☁️");
+    }
+    const idx=DB.products.findIndex(x=>x.id===prod.id);
+    if(idx>=0) DB.products[idx]=prod; else DB.products.push(prod);
+    saveLocal(DB); renderProducts(); $("#prodModal").classList.remove("open"); renderKPIs();
+  }catch(e){ $("#prodFormStatus").textContent="Erreur: "+e.message; toast(e.message,"⚠️"); }
+}
+async function deleteProd(){
+  if(!editingProdId) return; if(!confirm("Supprimer?")) return;
+  if(MODE==="cloud"&&firebaseApp&&currentUser){ const {doc,deleteDoc}=await import("firebase/firestore"); await deleteDoc(doc(firestore,"products",editingProdId)); }
+  DB.products=DB.products.filter(x=>x.id!==editingProdId); saveLocal(DB); renderProducts(); $("#prodModal").classList.remove("open"); toast("Supprimé","🗑️");
+}
+
+let editingCatId=null;
+function openCat(id){
+  const c= id? DB.categories.find(x=>x.id===id) : {id:"", name:"", desc:"", icon:"🍰", color:"#FFF1E0", order:DB.categories.length+1, visible:true};
+  editingCatId=c.id||null;
+  $("#c_id").value=c.id; $("#c_name").value=c.name; $("#c_desc").value=c.desc; $("#c_icon").value=c.icon; $("#c_color").value=c.color;
+  $("#catModal").classList.add("open");
+}
+function saveCat(){
+  const id=$("#c_id").value.trim().toLowerCase().replace(/\s+/g,"-"); if(!id){ toast("ID requis","⚠️"); return; }
+  const cat={id, name:$("#c_name").value.trim(), desc:$("#c_desc").value.trim(), icon:$("#c_icon").value.trim()||"🍰", color:$("#c_color").value, order:DB.categories.length, visible:true};
+  const idx=DB.categories.findIndex(x=>x.id===id || (editingCatId&&x.id===editingCatId));
+  if(idx>=0) DB.categories[idx]=cat; else DB.categories.push(cat);
+  if(MODE==="cloud"&&firebaseApp&&currentUser){ import("firebase/firestore").then(async ({doc,setDoc})=>{ await setDoc(doc(firestore,"categories",cat.id), cat); }); }
+  saveLocal(DB); renderCats(); $("#catModal").classList.remove("open"); toast("Catégorie sauvée","📂");
+}
+async function deleteCat(){ const id=$("#c_id").value.trim(); if(!id) return; if(!confirm("Supprimer "+id+"?")) return; DB.categories=DB.categories.filter(c=>c.id!==id); saveLocal(DB); renderCats(); $("#catModal").classList.remove("open"); if(MODE==="cloud"&&firebaseApp&&currentUser){ const {doc,deleteDoc}=await import("firebase/firestore"); await deleteDoc(doc(firestore,"categories",id)); } }
+
+function collectFB(){ return {apiKey:$("#fb_apiKey").value.trim(), authDomain:$("#fb_authDomain").value.trim(), projectId:$("#fb_projectId").value.trim(), storageBucket:$("#fb_storageBucket").value.trim(), messagingSenderId:$("#fb_messagingSenderId").value.trim(), appId:$("#fb_appId").value.trim()}; }
+async function initFB(cfg){
+  const {initializeApp}=await import("firebase/app"); const {getFirestore}=await import("firebase/firestore"); const {getAuth}=await import("firebase/auth");
+  const app=initializeApp(cfg); return {app, fs:getFirestore(app), au:getAuth(app)};
+}
+async function testFB(){
+  const cfg=collectFB(); if(!cfg.apiKey||!cfg.projectId){ toast("Config incomplète","⚠️"); return; }
+  $("#fb_status").textContent="Test... (sans Storage, gratuit)";
+  try{
+    const {app,fs}=await initFB(cfg); const {collection,getDocs,limit,query}=await import("firebase/firestore");
+    await getDocs(query(collection(fs,"products"), limit(1)));
+    $("#fb_status").textContent="CLOUD FREE CONNECTED - Firestore OK - Pas de Storage = 0 coût";
+    toast("Connexion FREE réussie","☁️");
+  }catch(e){
+    if(e.code && e.code.includes("permission")) $("#fb_status").textContent="Connecté mais règles Firestore à publier (voir firestore.rules)";
+    else $("#fb_status").textContent="Erreur: "+e.message;
+  }
+}
+async function connectFB(){
+  const cfg=collectFB(); if(!cfg.apiKey||!cfg.projectId){ toast("Config incomplète","⚠️"); return; }
+  try{
+    const res=await initFB(cfg); firebaseApp=res.app; firestore=res.fs; auth=res.au; FB_CONFIG=cfg; localStorage.setItem(FB_CFG_KEY, JSON.stringify(cfg));
+    $("#fb_status").textContent="CLOUD FREE CONNECTED - "+cfg.projectId+" (sans Storage)";
+    MODE="cloud"; localStorage.setItem(MODE_KEY,"cloud"); $("#modeSelect").value="cloud";
+    const {onAuthStateChanged}=await import("firebase/auth");
+    onAuthStateChanged(auth, u=>{ currentUser=u; if(u) $("#loginScreen").classList.remove("open"); else if(MODE==="cloud") $("#loginScreen").classList.add("open"); renderKPIs(); });
+    // load cloud
+    const {collection,getDocs}=await import("firebase/firestore");
+    try{ const snap=await getDocs(collection(firestore,"products")); const prods=[]; snap.forEach(d=>prods.push({id:d.id, ...d.data()})); if(prods.length) DB.products=prods; }catch{}
+    try{ const snap=await getDocs(collection(firestore,"categories")); const cats=[]; snap.forEach(d=>cats.push({id:d.id, ...d.data()})); if(cats.length) DB.categories=cats; }catch{}
+    saveLocal(DB); renderProducts(); renderCats(); renderKPIs(); toast("Connecté FREE sans Storage","☁️");
+  }catch(e){ $("#fb_status").textContent="Erreur: "+e.message; }
+}
+function disconnectFB(){ firebaseApp=null; firestore=null; auth=null; currentUser=null; MODE="demo"; localStorage.setItem(MODE_KEY,"demo"); $("#modeSelect").value="demo"; $("#loginScreen").classList.remove("open"); renderKPIs(); }
+
+async function importDemoToCloud(){
+  if(!firestore||!currentUser){ toast("Connectez-vous cloud d'abord","⚠️"); return; }
+  if(!confirm("Importer DEMO vers cloud Firestore (gratuit, sans Storage)?")) return;
+  const {doc,setDoc}=await import("firebase/firestore");
+  for(const p of DB.products) await setDoc(doc(firestore,"products",p.id), p);
+  for(const c of DB.categories) await setDoc(doc(firestore,"categories",c.id), c);
+  await setDoc(doc(firestore,"settings","main"), DB.settings);
+  toast("Import cloud FREE réussi","☁️");
+}
+
+function initEvents(){
+  $$(".nav-btn").forEach(b=> b.onclick=()=>{ $$(".nav-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active"); const v=b.getAttribute("data-view"); $("#viewTitle").textContent=b.textContent.trim(); $$("section[id^='view-']").forEach(s=>s.classList.add("hidden")); $(`#view-${v}`).classList.remove("hidden"); });
+  $("#openSide").onclick=()=>$("#sidebar").classList.add("open"); $("#closeSide").onclick=()=>$("#sidebar").classList.remove("open");
+  $$("[data-close]").forEach(b=> b.onclick=()=>b.closest(".modal").classList.remove("open"));
+  $("#modeSelect").onchange=()=>{ const nm=$("#modeSelect").value; if(nm!==MODE){ if(!confirm(`Passer de ${MODE} à ${nm}?`)){ $("#modeSelect").value=MODE; return; } MODE=nm; localStorage.setItem(MODE_KEY,nm); if(nm==="demo") disconnectFB(); else { if(FB_CONFIG) connectFB(); } renderKPIs(); } };
+  $("#saveAllBtn").onclick=()=>{ DB.settings.shopName=$("#h_shopName").value; DB.settings.heroTitle=$("#h_heroTitle").value; DB.settings.heroSubtitle=$("#h_heroSub").value; DB.settings.heroImage=$("#h_heroImage").value; DB.settings.contactAddress=$("#h_contactAddress").value; DB.settings.contactHours=$("#h_contactHours").value; DB.settings.contactWhatsApp=$("#h_contactWhatsApp").value; DB.settings.facebookPageUrl=$("#h_fb").value; DB.settings.instagramUrl=$("#h_insta").value; DB.settings.footerText=$("#h_footerText").value; DB.settings.whatsappNumber=$("#s_waNumber").value; DB.settings.whatsappEnabled=true; saveLocal(DB); if(MODE==="cloud"&&firestore&&currentUser){ (async()=>{ const {doc,setDoc}=await import("firebase/firestore"); await setDoc(doc(firestore,"settings","main"), DB.settings); })(); } toast("Sauvegardé FREE","💾"); };
+  $("#prodSearch").oninput=renderProducts; $("#prodFilterCat").onchange=renderProducts;
+  $("#addProdBtn").onclick=()=>openProd(null); $("#saveProdBtn").onclick=saveProd; $("#deleteProdBtn").onclick=deleteProd;
+  $("#p_images").oninput=()=>{ const first=$("#p_images").value.split("\n")[0]?.trim(); if(first){ $("#p_previewImg").src=first; $("#p_linkStatus").textContent="Aperçu depuis lien externe (gratuit)"; } };
+  $("#addCatBtn").onclick=()=>openCat(null); $("#saveCatBtn").onclick=saveCat; $("#deleteCatBtn").onclick=deleteCat;
+  $("#applyPresetBtn").onclick=()=>{ const v=$("#presetSelect").value; if(!v) return; DB.theme={...DB.theme, ...PRESETS[v]}; saveLocal(DB); toast("Preset "+v,"🎨"); };
+  $("#fb_saveBtn").onclick=()=>{ const cfg=collectFB(); if(!cfg.apiKey){ toast("Config incomplète","⚠️"); return; } FB_CONFIG=cfg; localStorage.setItem(FB_CFG_KEY, JSON.stringify(cfg)); renderKPIs(); toast("Config FREE sauvée","💾"); };
+  $("#fb_testBtn").onclick=testFB; $("#fb_connectBtn").onclick=connectFB; $("#fb_disconnectBtn").onclick=disconnectFB;
+  $("#fb_exportBtn").onclick=()=>{ if(!FB_CONFIG){ toast("Pas de config","⚠️"); return; } const blob=new Blob([JSON.stringify(FB_CONFIG,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="firebase-config.json"; a.click(); URL.revokeObjectURL(url); };
+  $("#fb_clearBtn").onclick=()=>{ if(confirm("Effacer config?")){ localStorage.removeItem(FB_CFG_KEY); FB_CONFIG=null; renderKPIs(); } };
+  $("#fb_importDemoToCloudBtn").onclick=importDemoToCloud;
+  $("#bk_exportAllBtn").onclick=()=>{ const data={...DB, exportedAt:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`sweety-backup-free-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); };
+  $("#bk_downloadConfigBtn").onclick=()=>{ if(!FB_CONFIG){ toast("Pas de config","⚠️"); return; } const blob=new Blob([JSON.stringify(FB_CONFIG,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="firebase-config.json"; a.click(); URL.revokeObjectURL(url); };
+  $("#bk_importFile").onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); window._pending=d; $("#bk_preview").textContent=`Aperçu: ${d.products?.length||0} produits`; }catch(err){ $("#bk_preview").textContent="JSON invalide"; } }; r.readAsText(f); };
+  $("#bk_applyImportBtn").onclick=()=>{ const d=window._pending; if(!d){ toast("Pas d'import","⚠️"); return; } if(!confirm("Appliquer import?")) return; DB.products=d.products||DB.products; DB.categories=d.categories||DB.categories; if(d.settings) DB.settings={...DB.settings, ...d.settings}; saveLocal(DB); renderProducts(); renderCats(); toast("Import appliqué FREE","✅"); };
+  $("#loginBtn").onclick=async ()=>{ if(!auth){ toast("Connecte Firebase d'abord","⚠️"); return; } const email=$("#loginEmail").value.trim(); const pass=$("#loginPass").value; if(!email||!pass){ toast("Email/mdp requis","⚠️"); return; } try{ const {signInWithEmailAndPassword}=await import("firebase/auth"); await signInWithEmailAndPassword(auth,email,pass); $("#loginScreen").classList.remove("open"); }catch(e){ $("#loginStatus").textContent="Erreur: "+e.message; } };
+  $("#logoutBtn").onclick=async ()=>{ if(!auth) return; const {signOut}=await import("firebase/auth"); await signOut(auth); $("#loginScreen").classList.add("open"); };
+  $("#testImageBtn").onclick=()=>{ const url=$("#testImageUrl").value.trim(); if(!url){ toast("Colle un lien d'abord","⚠️"); return; } $("#testImagePreview").src=url; $("#testImagePreview").style.display="block"; $("#testImageStatus").textContent="Chargement..."; $("#testImagePreview").onload=()=>{ $("#testImageStatus").textContent="✅ Image valide - tu peux utiliser ce lien dans produit"; toast("Lien valide","✅"); }; $("#testImagePreview").onerror=()=>{ $("#testImageStatus").textContent="❌ Lien invalide - vérifie que lien finit par .jpg/.png et vient de imgbb direct link"; toast("Lien invalide","❌"); }; };
+}
+
+function bootstrap(){
+  renderKPIs(); renderProducts(); renderCats();
+  if(MODE==="cloud"&&FB_CONFIG) connectFB();
+  initEvents();
+}
+bootstrap();
+</script>
+</body>
+</html>
